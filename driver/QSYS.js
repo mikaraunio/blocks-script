@@ -108,6 +108,12 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
         QSYS.prototype.controlTrigger = function (id) {
             this.tell('ct "' + id + '"');
         };
+        QSYS.prototype.snapshotLoad = function (sBank, sNum, rampTime) {
+            this.tell('ssl "' + sBank + '" ' + sNum + ' ' + rampTime);
+        };
+        QSYS.prototype.snapshotSave = function (sBank, sNum) {
+            this.tell('sss "' + sBank + '" ' + sNum);
+        };
         QSYS.prototype.connectStateChanged = function () {
             console.info("connectStateChanged", this.socket.connected);
             this.connected = this.socket.connected;
@@ -239,6 +245,23 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             __metadata("design:paramtypes", [String]),
             __metadata("design:returntype", void 0)
         ], QSYS.prototype, "controlTrigger", null);
+        __decorate([
+            Meta.callable("Snapshot Load"),
+            __param(0, Meta.parameter("Snapshot Bank")),
+            __param(1, Meta.parameter("Snapshot Number")),
+            __param(2, Meta.parameter("Ramp Time")),
+            __metadata("design:type", Function),
+            __metadata("design:paramtypes", [String, Number, Number]),
+            __metadata("design:returntype", void 0)
+        ], QSYS.prototype, "snapshotLoad", null);
+        __decorate([
+            Meta.callable("Snapshot Save"),
+            __param(0, Meta.parameter("Snapshot Bank")),
+            __param(1, Meta.parameter("Snapshot Number")),
+            __metadata("design:type", Function),
+            __metadata("design:paramtypes", [String, Number]),
+            __metadata("design:returntype", void 0)
+        ], QSYS.prototype, "snapshotSave", null);
         QSYS = __decorate([
             Meta.driver('NetworkTCP', { port: 1702 }),
             __metadata("design:paramtypes", [Object])

@@ -205,8 +205,24 @@ export class QSYS extends Driver<NetworkTCP> {
 		this.tell('ct "' + id + '"');
 	}
 
-	/* Snapshot Load NOT IMPLEMENTED */
-	/* Snapshot Save NOT IMPLEMENTED */
+	/* Snapshot Load */
+	@Meta.callable("Snapshot Load")
+	public snapshotLoad(
+		@Meta.parameter("Snapshot Bank") sBank: string,
+		@Meta.parameter("Snapshot Number") sNum: number,
+		@Meta.parameter("Ramp Time") rampTime: number
+	) {
+		this.tell('ssl "' + sBank + '" ' + sNum + ' ' + rampTime);
+	}
+
+	/* Snapshot Save */
+	@Meta.callable("Snapshot Save")
+	public snapshotSave(
+		@Meta.parameter("Snapshot Bank") sBank: string,
+		@Meta.parameter("Snapshot Number") sNum: number
+	) {
+		this.tell('sss "' + sBank + '" ' + sNum);
+	}
 
 	/**
 	 Connection state changed. If became connected, setup the connection. Called
