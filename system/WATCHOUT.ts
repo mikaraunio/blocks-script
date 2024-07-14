@@ -60,7 +60,7 @@ export interface WATCHOUTCluster extends Timeline {
 	gotoTime(time:number, auxTimelineName?:string): void; // Time in mS
 	gotoControlCue(cueName:string, reverseOnly: boolean, auxTimelineName?:string): void;
 
-	reset(): void;
+	reset(): void;	// Reset cluster to initial (just loaded) state
 
 	setLayerConditions(layerCond:number): void;
 	getLayerConditions(): number;
@@ -72,6 +72,24 @@ export interface WATCHOUTCluster extends Timeline {
 	standBy: boolean;
 
 	setInput(name:string, value:number, slewRateMs?:number): void;
+
+	/*	Get information about control cues on auxTimelineName or on Main timeline
+		if auxTimelineName is unspecified. If the include parameter is undefined
+		or 0, then return only named cues that have some effect and targets the
+		current timeline.
+
+		Pass a value in the include parameter to also return:
+
+	 	1	Cues that have no effect when executed (e.g., Play with no target timeline)
+		2	Cues targeting other timelines
+		4	Cues having no name
+
+		You can specify multiple includes by adding the numbers shown above.
+		E.g., calling getControlCues(1+4) will also return control cues
+		that have no effect and no name. The control cues returned will be
+		sorted in ascending time order.
+	 */
+	getControlCues(include?: number, auxTimelineName?:string): Promise<ControlCueInfo[]>;
 
 	// Get info about known aux timelines and their durations in mS
 	auxTimelines(): [{ name: string, duration: number }];
@@ -142,4 +160,27 @@ export interface AuxTimeline extends Timeline {
 
 	// Object is being shut down
 	subscribe(event: 'finish', listener: (sender: AuxTimeline)=>void): void;
+}
+
+export interface ControlCueInfo {
+	readonly name: string;		// Name of this control cue
+	readonly time: number;		// Time position of control cue on timeline, in mS
+
+	readonly jump: boolean;		// Control cue causes a jump
+	readonly jumpToCue: boolean; // Jump to cue named jumpCue (else jumps to time)
+	readonly jumpCue: string;	// Name of target cue to jump to
+	readonly jumpReverse: boolean;	// Search backwards for named jumpCue
+	readonly jumpTime: number;	// Time, in milliseconds, to jump to
+
+	readonly stop: boolean;		// Stop timeline
+
+	readonly run: boolean;		// Run again after jump
+	readonly jumpToRunDelay: number;	// Time, in mS to wait before running again
+
+	readonly targetTimeline: string;	// Name of target timeline (else current)
+
+	// Following provide information about the cue's enclosing layer
+	readonly layerName: string;
+	readonly layerCondition: number;
+	readonly layerStandby: boolean
 }

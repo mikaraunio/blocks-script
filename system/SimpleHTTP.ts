@@ -21,29 +21,41 @@ export interface Request {
 	setTimeout(seconds: number): Request;	// Maximum time the request may take
 	header(headerName:string, headerValue:string): Request; // Additional header sent with request
 
-	get<RetType>(): Promise<Response<RetType>>;	// Basic GET request, expected to return RetType (if interpreted)
+	get<RetType>(): Promise<Response<RetType>>;	// GET request, expected to return RetType (if interpreted)
 
 	// Default mediaType (aka "Content-Type") is "application/json" unless explicitly specified below
 	put<RetType>(dataToSend: string,  mediaType?: string): Promise<Response<RetType>>;	// PUT request with supplied data
 	post<RetType>(dataToSend: string,  mediaType?: string): Promise<Response<RetType>>;	// POST request with supplied data
+
+	delete(): Promise<Response<void>>;	// DELETE request, passing and returning no data
 }
 
 interface ReqOpts {
-	/*	If possible, interpret known response types, and store the result in Response#interpreted.
-		Currently supported response types are:
+	/*	If possible, interpret known response types, and store the result in
+		Response#interpreted. Currently supported response types are:
 
 		- "application/json"
-		Response#interpreted contains an object, or an array-like
-		object (if the outermist JSON data is array). Fields in objects
-		hold primitive data and other, nested objects. This method of loading
-		JSON data is more efficient than reading it as text and then
-		converting it to JSON using the JSON.parse() method.
+			Response#interpreted holds an object, or an array-like
+			object (if the outermost JSON data is array). Fields in objects
+			hold primitive data and other, nested objects or array-likes.
+			NOTE: This method of reading JSON data is more efficient than
+			first reading it as text and then converting it to JSON using
+			the JSON.parse() method.
 
 		- "application/xml" or "text/xml"
-		Response#interpreted holds an object corresponding to
-		the root element of the XML data. Attributes are provided as named
-		properties. Nested content is provided as an attribute with the
-		empty string as its key.
+			Response#interpreted holds an object corresponding to the root node
+			of the XML data.
+			*	Attributes and child nodes are provided as named properties.
+			*	If a node contains multiple child nodes with the same name,
+				this will be provided as an array-like object.
+			*	Any XML namespace specifiers are discarded. E.g., "ns:myname"
+				will be priovided under "myname" only.
+			*	If a node has both attributes and plain text content, that
+				text content will have an empty string as its key.
+
+		NOTE: An "array-like object" will have a length and can be indexed, but
+		doesn't have the methods of a JavaScript array. You can use the
+		ScriptBase.makeJSArray function to turn it into a JS array, if required.
 	 */
 	interpretResponse?: boolean;
 
@@ -55,7 +67,7 @@ interface ReqOpts {
 	// Options applicable only for interpreting CSV data.
 	columnSeparator?: string, 	// Separator character; default is ',' other common option is '\t'
 	escapeChar?: string,		// Escape character; default is none
-	quote?: string | false 		// Quote charagter to use, none if false; default is '"'
+	quote?: string | false 		// Quote character to use, none if false; default is '"'
 }
 
 /**

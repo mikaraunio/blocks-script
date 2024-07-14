@@ -19,6 +19,14 @@ export var Spot: SpotGroup;
  */
 export interface SpotGroupItem {
 	isOfTypeName(typeName: string): SpotGroupItem|null;
+
+	/** The name given to this item.
+	 */
+	readonly name: string;
+
+	/** Full path, including "Spot."
+	 */
+	readonly fullName: string;
 }
 
 export interface SpotGroup extends SpotGroupItem {
@@ -30,12 +38,13 @@ export interface SpotGroup extends SpotGroupItem {
  * Basic Spot properties available for most spot types.
  */
 export interface BaseSpot {
-	readonly fullName: string;		// Full path name
 	readonly name: string;			// Leaf spot name
+	readonly fullName: string;		// Full path to this system object
 
 	/**
-	 Default block name as "group/leaf", or empty string
-	 if none.
+	 Get/set block name as "group/leaf", or empty string if none.
+	 NOTE: See the setDefaultBlock function, which also controls
+	 block to be cached, if enabled.
 	 */
 	block: string;
 
@@ -46,12 +55,13 @@ export interface BaseSpot {
 	priorityBlock: string;
 
 	/**
-	 Get current playing block name as "group/leaf", or empty tring
+	 Get current playing block name as "group/leaf", or empty string
 	 if none.
 	 */
-	playingBlock: string;	// Read-only
+	readonly playingBlock: string;
 
-	// Spot disconnected and must no longer be used
+	/**	Spot disconnected and must no longer be used.
+	 */
 	subscribe(event: 'finish', listener: (sender: BaseSpot)=>void): void;
 
 	/*	Explicitly end subscription from listener function to event,
@@ -135,8 +145,22 @@ interface ControllableSpot extends BaseSpot {
 	customClasses: string;
 
 	/**
+	 * Comma separated list of tags applied to this spot. Use forceTags if you want to change this.
+	 * Note that the tagSet reported here includes all tags, including those statically assigned
+	 * through the Spot's configuration. This is available only when the Spot is connected.
+	 */
+	readonly tagSet: string;
+
+	/**
+	 * Comma separated list of fixed tags assigned through the Spot's configuration. This includes ONLY
+	 * those tags specified as "Fixed Tags". To obtain dynamically assigned tags, use tagSet instead.
+	 * This is available regardless of whether the Spot is connected or not.
+	 */
+	readonly fixedTagSet: string;
+
+	/**
 	 * Force set of local tags to only those specified (comma separated). Does not
-	 * alter any tags specified in the Spot's configuration. If ofSet specified,
+	 * alter any tags specified in the Spot's configuration. If ofSet is specified,
 	 * then alter only tags within ofSet, leaving others alone.
 	 */
 	forceTags(tags: string, ofSet?: string): void;
@@ -175,21 +199,26 @@ interface ControllableSpot extends BaseSpot {
 export interface DisplaySpot extends ControllableSpot, SpotGroupItem, GeoZonable {
 	isOfTypeName(typeName: "DisplaySpot"): DisplaySpot|null;
 
-	/**
-	 True if the spot is connected.
+	/** True if the spot is connected.
 	 */
 	readonly connected: boolean;
 
-	/**
-	 * Dot-separated IP address of display spot, if connected, else null.
+	/** Dot-separated IP address of display spot, if connected, else null.
 	 */
 	readonly address: string;
 
-	/**
-	 * Get any geolocation associated with spot, or null if none.
+	/** Get any geolocation associated with spot, or null if none.
 	 */
 	readonly geoZone: GeoZone|null;
 
+	/**
+	 * Most recently pressed keyboard key code, or emoty string if none.
+	 */
+	readonly keyCode: string;
+
+	/** Set Spot's startup and (if enabled) cached root block, as Group/Name.
+	 */
+	setDefaultBlock(block: string): void;
 
 	/**
 	 * Reload the current block. Occasionally useful after making server-side changes to
@@ -209,10 +238,21 @@ export interface DisplaySpot extends ControllableSpot, SpotGroupItem, GeoZonable
 	 */
 	power: boolean;
 
-	/**
-	 * Power up the display spot. Promise resolved once spot has connected.
+	/** Power up the display spot. Promise resolved once spot has connected.
 	 */
 	wakeUp(timeoutSeconds?: number): Promise<any>;
+
+	/**
+	 * Ask spot to shut down cleanly, without affecting the its 'power' property.
+	 * This is sometimes useful as a precaution prior to turning power off by
+	 * other means (such as a mains power switch), allowing the player to shut
+	 * down cleanly. The reason to not affecting the spot's 'power' property
+	 * is that setting it to false would make Blocks insist on keeping
+	 * the spot off, which would interfere with later attempting to turn
+	 * it on through the same external means.
+	 *
+	 */
+	shutDown(): void;
 
 	/**
 	 * Current time position (e.g., in video), in seconds. Write to position the video.
@@ -221,8 +261,7 @@ export interface DisplaySpot extends ControllableSpot, SpotGroupItem, GeoZonable
 	 */
 	time: number;
 
-	/**
-	 Ask display to reboot/reload. Not supported by all displays.
+	/** Ask display to reboot/reload. Not supported by all displays.
 	 */
 	reboot(): void;
 
@@ -234,46 +273,52 @@ export interface DisplaySpot extends ControllableSpot, SpotGroupItem, GeoZonable
 	 */
 	pictureSource: string;
 
-	/**
-	 Spot is playing (true) or paused (false).
+	/** Spot is playing (true) or paused (false).
 	 */
 	playing: boolean;
 
-	/**
-	 Spot is actively viewed
+	/** Spot is actively viewed
 	 */
 	active: boolean;
 
-	/**
-	 Controls or returns audio volume, if possible, as 0...1.
+	/** Controls or returns audio volume, if possible, as 0...1.
 	 */
 	volume: number;
 
+	/** Spot's MAC address, if known, else null
+	 */
+	readonly macAddress: string|null;
+
 	/**
 	 * Event fired when interesting connection state event occurs.
+	 * NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: "connect", listener: (sender: DisplaySpot, message:{
 		readonly type:
-			'Connection'|		// Connection state changed (check with isConnected)
-			'ConnectionFailed'	// Connection attempt failed
+			'Connection'|		// The 'connected' state changed
+			'ConnectionFailed'	// A connection attempt failed
 	})=>void): void;
 
 	/**
-	 *	Event fired when various spot state changes occur.
+	 *	Event fired when various Spot state changes occur.
+	 * 	NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: "spot", listener: (sender: DisplaySpot, message:{
-		readonly type:
-			'DefaultBlock'|		// Default block changed
-			'PriorityBlock'|	// Priority block changed
-			'PlayingBlock'|		// Actually playing block changed
-			'InputSource'|		// Input source selection changed
-			'Volume'|			// Audio volume changed (from Blocks)
-			'Active'|			// Actively viewed state changed
-			'Playing'			// Playing/paused state changed
+		readonly type:	// Indicates that a Spot property has changed:
+			'DefaultBlock'|		// block
+			'PriorityBlock'|	// priorityBlock
+			'PlayingBlock'|		// playingBlock
+			'InputSource'|		// pictureSource
+			'Volume'|			// volume (when changed through Blocks)
+			'Active'|			// active
+			'Playing'|			// playing
+			'KeyCode'|			// keyCode
+			'TagSet'			// tagSet
 	})=>void): void;
 
 	/**
-	 *	Event fired when user navigates manually to a block path
+	 *	Event fired when user navigates manually to a block path.
+	 * 	NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: 'navigation', listener: (sender: DisplaySpot, message: {
 		readonly targetPath: string,	// Path navigated to
@@ -282,6 +327,7 @@ export interface DisplaySpot extends ControllableSpot, SpotGroupItem, GeoZonable
 
 	/**
 	 *	Event fired when keyboard faux-GPIO (numeric key 0...9) changes state.
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: 'keyPress', listener: (sender: DisplaySpot, message: {
 		readonly input: number,		// Input that changed; 0...9
@@ -290,6 +336,7 @@ export interface DisplaySpot extends ControllableSpot, SpotGroupItem, GeoZonable
 
 	/**
 	 *	Event fired when on RFID/QR scanner input (keyboard text entry).
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: 'scannerInput', listener: (sender: DisplaySpot, message: {
 		readonly code: string,		// Scanned code, or empty string at end of scan
@@ -297,6 +344,7 @@ export interface DisplaySpot extends ControllableSpot, SpotGroupItem, GeoZonable
 
 	/**
 	 *	Event fired when Locator changes location of spot.
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: 'location', listener: (sender:DisplaySpot, message: {
 		readonly location: string	// New location, as Spot path, or empty string if left location
@@ -304,12 +352,12 @@ export interface DisplaySpot extends ControllableSpot, SpotGroupItem, GeoZonable
 
 	/**
 	 *	Event fired when image is received from Camera block on Spot.
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: 'image', listener: (sender: DisplaySpot, message: {
 		readonly filePath: string,	// Path to file just received (typically "/temp/xxx/xxx.jpeg")
 		readonly rollName: string	// Camera Block's assigned "roll name"
 	})=>void): void;
-
 
 	// Spot disconnected and must no longer be used
 	subscribe(event: 'finish', listener: (sender: DisplaySpot)=>void): void;
@@ -328,11 +376,35 @@ export interface MobileSpot extends SpotGroupItem, BaseSpot {
 	isOfTypeName(typeName: "MobileSpot"): MobileSpot | null;
 	readonly individual: boolean;	// Supports individual visitor identity
 
+	/**
+	 * Get a currently connected Visitor from its identifier, or null if
+	 * no such Visitor available now.
+	 */
+	getVisitor<RecordType extends RecordBase>(identity: string): Visitor<RecordType>|null;
+
+	/**
+	 * Get a list of IDs to all currently connected visitors. Occasionally useful to perform
+	 * some action across all visitors, then typically in conjunction with getVisitor(id) above
+	 * to obtain each individual visitor..
+	 */
+	getAllVisitorIds(): string[];
+
+	/**
+	 Decode a hashed visitor phone ID, as presented by the QR Code block set to
+	 "Visitor Spot Identity" mode, to the corresponding PUID number.
+	 Returns 0 if hashedIdentity is invalid.
+	 */
+	hashedIdentityToPuid(hashedIdentity: string): number;
+
+	/**
+	 * Events fired due to block changes.
+	 * NOTE: You need to re-subscribe if the object fires the 'finish' event.
+	 */
 	subscribe(event: 'spot', listener: (sender: MobileSpot, message:{
 		readonly type:
 			'DefaultBlock'|		// Default block changed (may be schedule)
 			'PriorityBlock'|	// Priority block changed (may be schedule)
-			'PlayingBlock'		// Actually playing block changed (always media)
+			'PlayingBlock'		// Actually playing block changed
 	})=>void): void;
 
 	/**
@@ -353,6 +425,7 @@ export interface MobileSpot extends SpotGroupItem, BaseSpot {
 	 *	the	Visitor object will receive the 'image' event first, and then the
 	 *	enclosing MobileSpot will receive it. In general, you should handle this
 	 *	event EITHER at the Visitor level OR the MobileSpot - not both.
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: 'image', listener: (sender: MobileSpot, message: {
 		readonly filePath: string,	// Path to file just received (typically "/temp/xxx/xxx.jpeg")
@@ -375,11 +448,13 @@ export interface MobileSpot extends SpotGroupItem, BaseSpot {
  */
 export interface Visitor<RecordType extends RecordBase> extends ControllableSpot {
 
-	readonly identity: string;		// Persistent, system-unique visitor (e.g. mobile phone) identifier
-	readonly record: RecordType | null;		// Associated data record, if any
+	readonly identity: string;			// Persistent, system-unique visitor (e.g. mobile phone) identifier
+	readonly record: RecordType | null;	// Associated data record, if any
+	readonly mobileSpot: MobileSpot;	// Provides access to my originating MobileSpot.
 
 	/**
 	 *	Event fired when various spot state changes occur.
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: "spot", listener: (sender: Visitor<RecordType>, message:{
 		readonly type:
@@ -390,6 +465,7 @@ export interface Visitor<RecordType extends RecordBase> extends ControllableSpot
 
 	/**
 	 *	Event fired when Locator changes location of spot.
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: 'location', listener: (sender: Visitor<RecordType>, message: {
 		readonly location: string	// New location, as Spot path, or empty string if left location
@@ -397,6 +473,7 @@ export interface Visitor<RecordType extends RecordBase> extends ControllableSpot
 
 	/**
 	 *	Event fired when image is received from Camera block on Spot.
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: 'image', listener: (sender: Visitor<RecordType>, message: {
 		readonly filePath: string,	// Path to file just received (typically "/temp/xxx/xxx.jpeg")
@@ -404,7 +481,8 @@ export interface Visitor<RecordType extends RecordBase> extends ControllableSpot
 	})=>void): void;
 
 	/**
-	 *	Event fired when user navigates manually to a block path
+	 *	Event fired when user navigates manually to a block path.
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
 	 */
 	subscribe(event: 'navigation', listener: (sender: Visitor<RecordType>, message: {
 		readonly targetPath: string,	// Path navigated to
@@ -420,11 +498,15 @@ export interface Visitor<RecordType extends RecordBase> extends ControllableSpot
 export interface VirtualSpot extends SpotGroupItem, BaseSpot, GeoZonable  {
 	isOfTypeName(typeName: "VirtualSpot"): VirtualSpot | null;
 
+	/**
+	 *	Event fired when various spot state changes occur.
+	 *  NOTE: You need to re-subscribe if the object fires the 'finish' event.
+	 */
 	subscribe(event: "spot", listener: (sender: VirtualSpot, message:{
 		type:
 			'DefaultBlock'|		// Default block changed (may be schedule)
 			'PriorityBlock'|	// Priority block changed (may be schedule)
-			'PlayingBlock' |	// Actually playing block changed (always media)
+			'PlayingBlock' |	// Actually playing block changed
 			'Active'			// Spot activated by accessing its Location ID
 	})=>void): void;
 

@@ -29,7 +29,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.VISCA = void 0;
-    var VISCA = (function (_super) {
+    var VISCA = exports.VISCA = (function (_super) {
         __extends(VISCA, _super);
         function VISCA(socket) {
             var _this = _super.call(this, socket) || this;
@@ -269,7 +269,6 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
         ], VISCA);
         return VISCA;
     }(Driver_1.Driver));
-    exports.VISCA = VISCA;
     function bytesToString(bytes) {
         var result = '';
         var hasData = false;
