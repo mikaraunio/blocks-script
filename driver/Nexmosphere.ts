@@ -710,6 +710,27 @@ class MotionInterface extends BaseInterface {
 Nexmosphere.registerInterface(MotionInterface, "XY320");
 
 
+/**
+ * Rotary encoder interface.
+ */
+class RotaryEncoderInterface extends BaseInterface {
+	private mRotation: string = "";
+
+	@property("Rotation", true)
+	get rotation(): string { return this.mRotation; }
+
+	receiveData(data: string) {
+		this.mRotation = data.substring(3);
+		this.changed('rotation'); // we still want property changes if the same event repeats
+	}
+
+	userFriendlyName() {
+		return "Encoder";
+	}
+}
+Nexmosphere.registerInterface(RotaryEncoderInterface, "XDWE60");
+
+
 /*
  *	Gender detector interface, indicating gender, age, gaze and some other tidbits about a person
  *	in front of the sensor (e.g., a camera).
