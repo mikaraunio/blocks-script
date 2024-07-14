@@ -599,10 +599,10 @@ class AirGestureInterface extends BaseInterface {
 
 	@property("Gesture detected", true)
 	get gesture(): string { return this.mGesture; }
-	set gesture(value: string) { this.mGesture = value; }
 
 	receiveData(data: string) {
-		this.gesture = data;
+		this.mGesture = data;
+		this.changed("gesture"); // We still want property changes if the same event repeats
 	}
 
 	userFriendlyName() {
