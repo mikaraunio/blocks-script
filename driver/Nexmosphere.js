@@ -28,17 +28,21 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
     exports.Nexmosphere = void 0;
     var kRfidPacketParser = /^XR\[P(.)(\d+)]$/;
     var kPortPacketParser = /^X(\d+)([AB])\[(.+)]$/;
-    var kProductCodeParser = /D(\d+)B\[\w+=(.+)]$/;
-    var Nexmosphere = exports.Nexmosphere = (function (_super) {
+    var kProductCodeParser = /D(\d+)B\[TYPE=(.+)]$/;
+    var Nexmosphere = (function (_super) {
         __extends(Nexmosphere, _super);
         function Nexmosphere(connection) {
             var _this = _super.call(this, connection) || this;
             _this.connection = connection;
             _this.specifiedInterfaces = [];
+            _this.SEND_INTERVAL = 100;
             _this.pollEnabled = true;
             _this.numInterfaces = 8;
             _this.pollIndex = 0;
+            _this.firstConnect = true;
             _this.awake = false;
+            _this.sendQueue = [];
+            _this.sendTimer = undefined;
             _this.element = _this.namedAggregateProperty("element", BaseInterface);
             _this.interface = [];
             if (connection.options) {
@@ -70,14 +74,29 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
             });
             connection.subscribe('connect', function (sender, message) {
                 if (message.type === 'Connection' && connection.connected) {
-                    log("Connected", _this.pollEnabled);
+                    log("Connected, polling: " + _this.pollEnabled);
                     if (!_this.pollIndex && _this.pollEnabled)
                         _this.pollNext();
+                    if (_this.firstConnect) {
+                        _this.firstConnect = false;
+                    }
+                    else {
+                        log("Reconfiguring devices on reconnect");
+                        _this.reconfigureAll();
+                    }
+                    if (_this.sendTimer === undefined) {
+                        _this.runSendLoop();
+                    }
                 }
                 else {
                     log("Disconnected");
                     if (!_this.interface.length)
                         _this.pollIndex = 0;
+                    if (_this.sendTimer !== undefined) {
+                        _this.sendQueue = [];
+                        _this.sendTimer.cancel();
+                        _this.sendTimer = undefined;
+                    }
                 }
             });
             return _this;
@@ -151,7 +170,17 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
             this.send(sensorMessage);
         };
         Nexmosphere.prototype.send = function (rawData) {
-            this.connection.sendText(rawData, "\r\n");
+            this.sendQueue.push(rawData);
+        };
+        Nexmosphere.prototype.runSendLoop = function () {
+            var _this = this;
+            var next = this.sendQueue.shift();
+            if (next !== undefined) {
+                this.connection.sendText(next, "\r\n");
+                log("Sent: " + next);
+            }
+            this.sendTimer = wait(this.SEND_INTERVAL);
+            this.sendTimer.then(function () { return _this.runSendLoop(); });
         };
         Nexmosphere.prototype.reInitialize = function () {
             _super.prototype.reInitialize.call(this);
@@ -205,6 +234,14 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
             }
             this.interface[ix] = this.element[ifaceName] = iface;
         };
+        Nexmosphere.prototype.reconfigureAll = function () {
+            for (var _i = 0, _a = this.interface; _i < _a.length; _i++) {
+                var element = _a[_i];
+                if (element) {
+                    element.reconfigure();
+                }
+            }
+        };
         var Nexmosphere_1;
         __decorate([
             (0, Metadata_1.callable)("Send raw string data to the Nexmosphere controller"),
@@ -218,6 +255,12 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
             __metadata("design:paramtypes", []),
             __metadata("design:returntype", void 0)
         ], Nexmosphere.prototype, "reInitialize", null);
+        __decorate([
+            (0, Metadata_1.callable)('Reconfigure all'),
+            __metadata("design:type", Function),
+            __metadata("design:paramtypes", []),
+            __metadata("design:returntype", void 0)
+        ], Nexmosphere.prototype, "reconfigureAll", null);
         Nexmosphere = Nexmosphere_1 = __decorate([
             (0, Metadata_1.driver)('NetworkTCP', { port: 4001 }),
             (0, Metadata_1.driver)('SerialPort', { baudRate: 115200 }),
@@ -225,14 +268,19 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
         ], Nexmosphere);
         return Nexmosphere;
     }(Driver_1.Driver));
+    exports.Nexmosphere = Nexmosphere;
     var BaseInterface = (function (_super) {
         __extends(BaseInterface, _super);
         function BaseInterface(driver, index) {
             var _this = _super.call(this) || this;
             _this.driver = driver;
             _this.index = index;
+            _this.reconfigure();
             return _this;
         }
+        BaseInterface.prototype.reconfigure = function () {
+            return;
+        };
         BaseInterface.prototype.receiveData = function (data, tag) {
             console.log("Unexpected data recieved on interface " + this.index + " " + data);
         };
@@ -629,14 +677,21 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
             _this.mGesture = "";
             return _this;
         }
+        AirGestureInterface.prototype.reconfigure = function () {
+            var ifaceStr = (("000" + (this.index + 1)).slice(-3));
+            this.driver.send("X" + ifaceStr + "S[5:1]");
+            this.driver.send("X" + ifaceStr + "S[6:1]");
+            this.driver.send("X" + ifaceStr + "S[7:2]");
+            log('Reconfigured AirGesture element on interface ' + (this.index + 1));
+        };
         Object.defineProperty(AirGestureInterface.prototype, "gesture", {
             get: function () { return this.mGesture; },
-            set: function (value) { this.mGesture = value; },
             enumerable: false,
             configurable: true
         });
         AirGestureInterface.prototype.receiveData = function (data) {
-            this.gesture = data;
+            this.mGesture = data;
+            this.changed("gesture");
         };
         AirGestureInterface.prototype.userFriendlyName = function () {
             return "Air";
@@ -644,7 +699,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
         __decorate([
             (0, Metadata_1.property)("Gesture detected", true),
             __metadata("design:type", String),
-            __metadata("design:paramtypes", [String])
+            __metadata("design:paramtypes", [])
         ], AirGestureInterface.prototype, "gesture", null);
         return AirGestureInterface;
     }(BaseInterface));
@@ -828,6 +883,33 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
         return MotionInterface;
     }(BaseInterface));
     Nexmosphere.registerInterface(MotionInterface, "XY320");
+    var RotaryEncoderInterface = (function (_super) {
+        __extends(RotaryEncoderInterface, _super);
+        function RotaryEncoderInterface() {
+            var _this = _super !== null && _super.apply(this, arguments) || this;
+            _this.mRotation = "";
+            return _this;
+        }
+        Object.defineProperty(RotaryEncoderInterface.prototype, "rotation", {
+            get: function () { return this.mRotation; },
+            enumerable: false,
+            configurable: true
+        });
+        RotaryEncoderInterface.prototype.receiveData = function (data) {
+            this.mRotation = data.substring(3);
+            this.changed('rotation');
+        };
+        RotaryEncoderInterface.prototype.userFriendlyName = function () {
+            return "Encoder";
+        };
+        __decorate([
+            (0, Metadata_1.property)("Rotation", true),
+            __metadata("design:type", String),
+            __metadata("design:paramtypes", [])
+        ], RotaryEncoderInterface.prototype, "rotation", null);
+        return RotaryEncoderInterface;
+    }(BaseInterface));
+    Nexmosphere.registerInterface(RotaryEncoderInterface, "XDWE60");
     var GenderInterface = (function (_super) {
         __extends(GenderInterface, _super);
         function GenderInterface() {
@@ -924,7 +1006,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
         return GenderInterface;
     }(BaseInterface));
     Nexmosphere.registerInterface(GenderInterface, "XY510", "XY520");
-    var DEBUG = false;
+    var DEBUG = true;
     function log() {
         var messages = [];
         for (var _i = 0; _i < arguments.length; _i++) {
