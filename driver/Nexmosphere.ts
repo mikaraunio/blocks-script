@@ -67,12 +67,15 @@ export class Nexmosphere extends Driver<ConnType> {
 	private static interfaceRegistry: Dictionary<BaseInterfaceCtor<BaseInterface>>;
 
 	private readonly specifiedInterfaces: IfaceInfo[] = []; // Interfaces hardcoded using Driver Options.
+	private readonly SEND_INTERVAL = 100; // How often to send messages, in ms
 	private pollEnabled = true; // Enabled unless interfaces hardcoded in Driver options
 	private numInterfaces = 8; // Number of "interface channels" in the Nexmosphere controller.
 
 	private lastTag: TagInfo;	// Most recently received RFID TagInfo, awaiting the port message
 	private pollIndex = 0;		// Most recently polled interface
 	private awake = false;		// Set once we receive first data from device
+	private sendQueue: string[] = [];
+	private sendTimer: CancelablePromise<void> | undefined = undefined;
 
 	private readonly interface: BaseInterface[]; // Interfaces discovered, keyed by 0-based index
 	private readonly element: Dictionary<BaseInterface>; // Named aggregate properties for each interface
@@ -121,10 +124,18 @@ export class Nexmosphere extends Driver<ConnType> {
 				log("Connected", this.pollEnabled)
 				if (!this.pollIndex && this.pollEnabled)	// Not yet polled for interfaces and polling is enabled
 					this.pollNext();	// Get started
+				if (this.sendTimer === undefined) {
+					this.runSendLoop(); // Start the message sender loop
+				}
 			} else {	// Connection failed or disconnected
 				log("Disconnected")
 				if (!this.interface.length)	// Got NO interfaces - re-start polling on next connect
 					this.pollIndex = 0;
+				if (this.sendTimer !== undefined) {
+					this.sendQueue = []; // cancel any queued outgoing messages
+					this.sendTimer.cancel(); // and stop the message sender loop
+					this.sendTimer = undefined;
+				}
 			}
 		});
 	}
@@ -208,7 +219,17 @@ export class Nexmosphere extends Driver<ConnType> {
 	*/
 	@callable("Send raw string data to the Nexmosphere controller")
 	send(rawData: string) {
-		this.connection.sendText(rawData, "\r\n");
+		this.sendQueue.push(rawData);
+	}
+
+	private runSendLoop() {
+		let next = this.sendQueue.shift();
+		if (next !== undefined) {
+			this.connection.sendText(next, "\r\n");
+			log("Sent: " + next);
+		}
+		this.sendTimer = wait(this.SEND_INTERVAL);
+		this.sendTimer.then(() => this.runSendLoop());
 	}
 
 	// Expose reInitialize to tasks to re-build set of dynamic properties
