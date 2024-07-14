@@ -73,6 +73,7 @@ export class Nexmosphere extends Driver<ConnType> {
 
 	private lastTag: TagInfo;	// Most recently received RFID TagInfo, awaiting the port message
 	private pollIndex = 0;		// Most recently polled interface
+	private firstConnect = true;
 	private awake = false;		// Set once we receive first data from device
 	private sendQueue: string[] = [];
 	private sendTimer: CancelablePromise<void> | undefined = undefined;
@@ -124,6 +125,12 @@ export class Nexmosphere extends Driver<ConnType> {
 				log("Connected, polling: " + this.pollEnabled)
 				if (!this.pollIndex && this.pollEnabled)	// Not yet polled for interfaces and polling is enabled
 					this.pollNext();	// Get started
+				if (this.firstConnect) {
+					this.firstConnect = false;
+				} else {
+					log("Reconfiguring devices on reconnect");
+					this.reconfigureAll();
+				}
 				if (this.sendTimer === undefined) {
 					this.runSendLoop(); // Start the message sender loop
 				}
@@ -303,6 +310,16 @@ export class Nexmosphere extends Driver<ConnType> {
 
 		this.interface[ix] = this.element[ifaceName] = iface;
 	}
+
+	@callable('Reconfigure all')
+	reconfigureAll()
+	{
+		for (let element of this.interface) {
+			if (element) {
+				element.reconfigure();
+			}
+		}
+	}
 }
 
 /**
@@ -314,6 +331,11 @@ class BaseInterface extends AggregateElem {
 		protected readonly index: number
 	) {
 		super();
+		this.reconfigure();
+	}
+
+	public reconfigure() {
+		return;
 	}
 
 	receiveData(data: string, tag?: TagInfo): void {
