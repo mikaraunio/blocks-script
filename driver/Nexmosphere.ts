@@ -49,7 +49,7 @@ const kRfidPacketParser = /^XR\[P(.)(\d+)]$/;
 const kPortPacketParser = /^X(\d+)([AB])\[(.+)]$/;
 
 // Controllers response to a product code request (D003B[TYPE]) controller response D001B[TYPE=XRDR1  ]
-const kProductCodeParser = /D(\d+)B\[\w+=(.+)]$/;
+const kProductCodeParser = /D(\d+)B\[TYPE=(.+)]$/;
 
 // A simple map-like object type
 interface Dictionary<TElem> { [id: string]: TElem; }
