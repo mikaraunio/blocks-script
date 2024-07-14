@@ -121,7 +121,7 @@ export class Nexmosphere extends Driver<ConnType> {
 		connection.subscribe('connect', (sender, message) => {
 			// Initiate polling once connected and only first time (may reconnect several times)
 			if (message.type === 'Connection' && connection.connected) { // Just connected
-				log("Connected", this.pollEnabled)
+				log("Connected, polling: " + this.pollEnabled)
 				if (!this.pollIndex && this.pollEnabled)	// Not yet polled for interfaces and polling is enabled
 					this.pollNext();	// Get started
 				if (this.sendTimer === undefined) {
