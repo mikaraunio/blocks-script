@@ -597,14 +597,6 @@ Nexmosphere.registerInterface(TimeOfFlightInterface, "XY240","XY241");
 class AirGestureInterface extends BaseInterface {
 	private mGesture = "";
 
-	public reconfigure() {
-		let ifaceStr: string = (("000" + (this.index + 1)).slice(-3)); // Pad index with leading zeroes
-		this.driver.send("X" + ifaceStr + "S[5:1]"); // Deactivate AirButton
-		this.driver.send("X" + ifaceStr + "S[6:1]"); // Deactivate AirSwipe
-		this.driver.send("X" + ifaceStr + "S[7:2]"); // Activate AirWheel
-		log('Reconfigured AirGesture element on interface ' + (this.index + 1));
-	}
-
 	@property("Gesture detected", true)
 	set gesture(value: string) { this.mGesture = value; }
 	get gesture(): string { return this.mGesture; }
