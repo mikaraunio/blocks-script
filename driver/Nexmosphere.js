@@ -57,7 +57,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
                     for (var _i = 0, _a = _this.specifiedInterfaces; _i < _a.length; _i++) {
                         var iface = _a[_i];
                         log("Specified interfaces", iface.ifaceNo, iface.modelCode, iface.name);
-                        _this.addInterface(iface.ifaceNo, iface.modelCode, iface.name);
+                        _this.addInterface(iface.ifaceNo, iface.modelCode, iface.name, iface.initCmds);
                     }
                 }
             }
@@ -217,14 +217,14 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
                 console.warn("Unknown command received from controller", msg);
             }
         };
-        Nexmosphere.prototype.addInterface = function (portNumber, modelCode, name) {
+        Nexmosphere.prototype.addInterface = function (portNumber, modelCode, name, initCmds) {
             var ix = portNumber - 1;
             var ctor = Nexmosphere_1.interfaceRegistry[modelCode];
             if (!ctor) {
                 console.warn("Unknown interface model - using generic 'unknown' type", modelCode);
                 ctor = UnknownInterface;
             }
-            var iface = new ctor(this, ix);
+            var iface = new ctor(this, ix, initCmds);
             var ifaceName = name;
             if (!ifaceName) {
                 ifaceName = iface.userFriendlyName();
@@ -271,15 +271,23 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
     exports.Nexmosphere = Nexmosphere;
     var BaseInterface = (function (_super) {
         __extends(BaseInterface, _super);
-        function BaseInterface(driver, index) {
+        function BaseInterface(driver, index, initCmds) {
             var _this = _super.call(this) || this;
             _this.driver = driver;
             _this.index = index;
+            _this.initCmds = initCmds;
             _this.reconfigure();
             return _this;
         }
         BaseInterface.prototype.reconfigure = function () {
-            return;
+            if (this.initCmds) {
+                var ifaceStr = (("000" + (this.index + 1)).slice(-3));
+                for (var _i = 0, _a = this.initCmds; _i < _a.length; _i++) {
+                    var cmd = _a[_i];
+                    this.driver.send("X" + ifaceStr + cmd);
+                }
+                log('Reconfigured element on interface ' + (this.index + 1));
+            }
         };
         BaseInterface.prototype.receiveData = function (data, tag) {
             console.log("Unexpected data recieved on interface " + this.index + " " + data);
@@ -677,15 +685,9 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
             _this.mGesture = "";
             return _this;
         }
-        AirGestureInterface.prototype.reconfigure = function () {
-            var ifaceStr = (("000" + (this.index + 1)).slice(-3));
-            this.driver.send("X" + ifaceStr + "S[5:1]");
-            this.driver.send("X" + ifaceStr + "S[6:1]");
-            this.driver.send("X" + ifaceStr + "S[7:2]");
-            log('Reconfigured AirGesture element on interface ' + (this.index + 1));
-        };
         Object.defineProperty(AirGestureInterface.prototype, "gesture", {
             get: function () { return this.mGesture; },
+            set: function (value) { this.mGesture = value; },
             enumerable: false,
             configurable: true
         });
@@ -699,7 +701,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
         __decorate([
             (0, Metadata_1.property)("Gesture detected", true),
             __metadata("design:type", String),
-            __metadata("design:paramtypes", [])
+            __metadata("design:paramtypes", [String])
         ], AirGestureInterface.prototype, "gesture", null);
         return AirGestureInterface;
     }(BaseInterface));
@@ -887,25 +889,41 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
         __extends(RotaryEncoderInterface, _super);
         function RotaryEncoderInterface() {
             var _this = _super !== null && _super.apply(this, arguments) || this;
-            _this.mRotation = "";
+            _this.mRotation = 0;
             return _this;
         }
         Object.defineProperty(RotaryEncoderInterface.prototype, "rotation", {
             get: function () { return this.mRotation; },
+            set: function (value) { this.mRotation = value; },
             enumerable: false,
             configurable: true
         });
         RotaryEncoderInterface.prototype.receiveData = function (data) {
-            this.mRotation = data.substring(3);
-            this.changed('rotation');
+            var _a = data.split('='), cmd = _a[0], value = _a[1];
+            if (cmd == 'Rd') {
+                var result = void 0;
+                if (value == 'STOP') {
+                    result = 0;
+                }
+                else {
+                    var _b = value.split(':'), dirStr = _b[0], stepsStr = _b[1];
+                    var steps = (stepsStr !== undefined ? parseInt(stepsStr) : 1);
+                    result = (dirStr == 'CCW' ? -steps : steps);
+                }
+                this.mRotation = result;
+                this.changed('rotation');
+            }
+            else if (cmd == 'Av') {
+                this.rotation = parseInt(value);
+            }
         };
         RotaryEncoderInterface.prototype.userFriendlyName = function () {
             return "Encoder";
         };
         __decorate([
             (0, Metadata_1.property)("Rotation", true),
-            __metadata("design:type", String),
-            __metadata("design:paramtypes", [])
+            __metadata("design:type", Number),
+            __metadata("design:paramtypes", [Number])
         ], RotaryEncoderInterface.prototype, "rotation", null);
         return RotaryEncoderInterface;
     }(BaseInterface));
