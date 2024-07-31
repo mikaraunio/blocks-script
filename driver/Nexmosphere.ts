@@ -592,7 +592,7 @@ class TimeOfFlightInterface extends BaseInterface {
 Nexmosphere.registerInterface(TimeOfFlightInterface, "XY240","XY241");
 
 /**
- *Modle a Gesture detector interface.
+ *Model a Gesture detector interface.
  */
 class AirGestureInterface extends BaseInterface {
 	private mGesture = "";
@@ -606,6 +606,7 @@ class AirGestureInterface extends BaseInterface {
 	}
 
 	@property("Gesture detected", true)
+	set gesture(value: string) { this.mGesture = value; }
 	get gesture(): string { return this.mGesture; }
 
 	receiveData(data: string) {
@@ -765,14 +766,28 @@ Nexmosphere.registerInterface(MotionInterface, "XY320");
  * Rotary encoder interface.
  */
 class RotaryEncoderInterface extends BaseInterface {
-	private mRotation: string = "";
+	private mRotation: number = 0;
 
 	@property("Rotation", true)
-	get rotation(): string { return this.mRotation; }
+	set rotation(value: number) { this.mRotation = value; }
+	get rotation(): number { return this.mRotation; }
 
 	receiveData(data: string) {
-		this.mRotation = data.substring(3);
-		this.changed('rotation'); // we still want property changes if the same event repeats
+		const [cmd, value] = data.split('=');
+		if (cmd == 'Rd') {
+			let result: number;
+			if (value == 'STOP') {
+				result = 0;
+			} else {
+				const [dirStr, stepsStr] = value.split(':');
+				const steps = (stepsStr !== undefined ? parseInt(stepsStr) : 1);
+				result = (dirStr == 'CCW' ? -steps : steps);
+			}
+			this.mRotation = result;
+			this.changed('rotation'); // we still want property changes if the same event repeats
+		} else if (cmd == 'Av') {
+			this.rotation = parseInt(value);
+		}
 	}
 
 	userFriendlyName() {
