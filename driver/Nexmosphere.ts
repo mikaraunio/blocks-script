@@ -24,7 +24,8 @@ a JSON array like this:
 },{
 	"modelCode": "XY116",
 	"ifaceNo": 3,
-	"name": "Distance"
+	"name": "Distance",
+	"initCmds": ["S[5:1]", "S[7:2]"]
 }]
 
 The "name" settings above are optional, but will make the property paths more
@@ -55,7 +56,7 @@ const kProductCodeParser = /D(\d+)B\[TYPE=(.+)]$/;
 interface Dictionary<TElem> { [id: string]: TElem; }
 
 // A class constructor function
-interface BaseInterfaceCtor<T> { new(driver: Nexmosphere, index: number): T; }
+interface BaseInterfaceCtor<T> { new(driver: Nexmosphere, index: number, initCmds?: string[]): T; }
 
 type ConnType = NetworkTCP | SerialPort;	// I accept either type of backend
 
@@ -98,7 +99,7 @@ export class Nexmosphere extends Driver<ConnType> {
 				this.pollEnabled = false;
 				for (let iface of this.specifiedInterfaces) {
 					log("Specified interfaces", iface.ifaceNo, iface.modelCode, iface.name);
-					this.addInterface(iface.ifaceNo, iface.modelCode, iface.name);
+					this.addInterface(iface.ifaceNo, iface.modelCode, iface.name, iface.initCmds);
 				}
 			}
 		}
@@ -289,7 +290,8 @@ export class Nexmosphere extends Driver<ConnType> {
 	private addInterface(
 		portNumber: number,	// 1-based interface/port number
 		modelCode: string, // Nexmosphere's element model code
-		name?: string	  // optional name (from Config Options)
+		name?: string,	  // optional name (from Config Options)
+		initCmds?: string[]  // optional configuration commands (from Config Options)
 	) {
 		const ix = portNumber - 1;
 		let ctor = Nexmosphere.interfaceRegistry[modelCode];
@@ -299,7 +301,7 @@ export class Nexmosphere extends Driver<ConnType> {
 		}
 		// Make it accessible both by name and 0-based interface index
 
-		const iface = new ctor(this, ix);
+		const iface = new ctor(this, ix, initCmds);
 		let ifaceName = name;
 		if (!ifaceName) {	// Synthesize a name
 			ifaceName = iface.userFriendlyName();
@@ -328,14 +330,21 @@ export class Nexmosphere extends Driver<ConnType> {
 class BaseInterface extends AggregateElem {
 	constructor(
 		protected readonly driver: Nexmosphere,
-		protected readonly index: number
+		protected readonly index: number,
+		protected readonly initCmds?: string[]
 	) {
 		super();
 		this.reconfigure();
 	}
 
 	public reconfigure() {
-		return;
+		if (this.initCmds) {
+			let ifaceStr: string = (("000" + (this.index + 1)).slice(-3)); // Pad index with leading zeroes
+			for (const cmd of this.initCmds) {
+				this.driver.send("X" + ifaceStr + cmd);
+			}
+			log('Reconfigured element on interface ' + (this.index + 1));
+		}
 	}
 
 	receiveData(data: string, tag?: TagInfo): void {
@@ -873,6 +882,7 @@ interface IfaceInfo {
 	modelCode: string;
 	ifaceNo: number;
 	name?: string;
+	initCmds?: string[];
 }
 
 /**
