@@ -97,7 +97,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             __metadata("design:paramtypes", [Boolean])
         ], ArduinoRapids.prototype, "connected", null);
         __decorate([
-            (0, Metadata_1.property)("Intensity", true),
+            (0, Metadata_1.property)("Intensity", false),
             (0, Metadata_1.min)(0),
             (0, Metadata_1.max)(300),
             __metadata("design:type", Number),

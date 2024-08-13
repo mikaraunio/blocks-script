@@ -38,7 +38,7 @@ export class ArduinoRapids extends Driver<ConnType> {
 	public set connected(val: boolean) { this.mConnected = val; }
 	public get connected() { return this.mConnected; }
 
-	@property("Intensity", true)
+	@property("Intensity", false)
 	@min(0)
 	@max(300)
 	public set intensity(val: number) {
