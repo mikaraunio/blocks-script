@@ -29,7 +29,7 @@ const OkResponseParser = /^OK(\d\d\d)$/
 type ConnType = NetworkTCP | SerialPort;	// I accept either type of backend
 
 @driver('NetworkTCP', { port: 4001 })
-@driver('SerialPort', { baudRate: 115200 })
+@driver('SerialPort', { baudRate: 19200 })
 export class ArduinoRapids extends Driver<ConnType> {
 	private mConnected: boolean = false;
 	private mIntensity: number = 0;
@@ -87,7 +87,7 @@ export class ArduinoRapids extends Driver<ConnType> {
 
 	// @callable("Send raw string data to the device")
 	protected send(rawData: string) {
-		this.connection.sendText(rawData, "\r\n");
+		this.connection.sendText(rawData, "\n");
 		log("Sent: "+ rawData);
 	}
 

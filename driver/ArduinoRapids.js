@@ -85,7 +85,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             configurable: true
         });
         ArduinoRapids.prototype.send = function (rawData) {
-            this.connection.sendText(rawData, "\r\n");
+            this.connection.sendText(rawData, "\n");
             log("Sent: " + rawData);
         };
         ArduinoRapids.prototype.setupConnection = function () {
@@ -105,7 +105,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
         ], ArduinoRapids.prototype, "intensity", null);
         ArduinoRapids = __decorate([
             (0, Metadata_1.driver)('NetworkTCP', { port: 4001 }),
-            (0, Metadata_1.driver)('SerialPort', { baudRate: 115200 }),
+            (0, Metadata_1.driver)('SerialPort', { baudRate: 19200 }),
             __metadata("design:paramtypes", [Object])
         ], ArduinoRapids);
         return ArduinoRapids;
