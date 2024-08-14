@@ -84,6 +84,7 @@ export class LeuzeBPS8 extends Driver<NetworkTCP> {
 	private mReadQualityString: string = '';
 	private mReadTimeout = false;
 	private samplesRead = 0;
+	private queriesSent = 0;
 
 	// Timers
 	private pollTimer: CancelablePromise<void>;
@@ -240,6 +241,10 @@ export class LeuzeBPS8 extends Driver<NetworkTCP> {
 	private send(data: number[]) {
 		// console.info('Send', this.toBinary(data));
 		this.socket.sendBytes(data);
+		this.queriesSent++;
+		if (this.queriesSent % 100 == 0) {
+			console.log('Queries sent', this.queriesSent)
+		}
 	}
 
 	private toBinary(input: number[]): string {
