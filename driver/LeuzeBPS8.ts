@@ -304,5 +304,6 @@ export class LeuzeBPS8 extends Driver<NetworkTCP> {
 		this.readQualityString = readQualityStrings[readQuality];
 		// Use Int32Array for two's complement handling
 		this.position = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0];
+		console.log(this.position);
 	}
 }
