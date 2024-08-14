@@ -44,8 +44,6 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             _this.mReadQuality = 3;
             _this.mReadQualityString = '';
             _this.mReadTimeout = false;
-            _this.samplesRead = 0;
-            _this.queriesSent = 0;
             socket.subscribe('connect', function () { return _this.connectStateChanged(); });
             socket.subscribe('bytesReceived', function (_, msg) { return _this.bytesReceived(msg.rawData); });
             socket.subscribe('finish', function () { return _this.tearDownConnection(); });
@@ -160,10 +158,6 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
         };
         LeuzeBPS8.prototype.bytesReceived = function (bytes) {
             this.leuzeProcessData(bytes);
-            this.samplesRead++;
-            if (this.samplesRead % 100 == 0) {
-                console.log('Samples read', this.samplesRead);
-            }
             if (this.timeoutTimer) {
                 this.timeoutTimer.cancel();
             }
@@ -188,10 +182,6 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
         };
         LeuzeBPS8.prototype.send = function (data) {
             this.socket.sendBytes(data);
-            this.queriesSent++;
-            if (this.queriesSent % 100 == 0) {
-                console.log('Queries sent', this.queriesSent);
-            }
         };
         LeuzeBPS8.prototype.toBinary = function (input) {
             var padToOctet = function (s) { return ('00000000' + s).substring(s.length); };
