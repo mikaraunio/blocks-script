@@ -26,7 +26,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LeuzeBPS8 = void 0;
-    var POLL_INTERVAL = 33;
+    var POLL_INTERVAL = 66;
     var TIMEOUT = 2000;
     var DEFAULT_PORT = 4001;
     var LeuzeBPS8 = (function (_super) {
@@ -221,7 +221,6 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             this.readQuality = readQuality;
             this.readQualityString = readQualityStrings[readQuality];
             this.position = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0];
-            console.log(this.position);
         };
         __decorate([
             Meta.property("Connected to TCP server", true),
