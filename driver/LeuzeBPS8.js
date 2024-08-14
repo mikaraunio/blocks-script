@@ -26,7 +26,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LeuzeBPS8 = void 0;
-    var POLL_INTERVAL = 66;
+    var POLL_INTERVAL = 33;
     var TIMEOUT = 2000;
     var DEFAULT_PORT = 4001;
     var LeuzeBPS8 = (function (_super) {
