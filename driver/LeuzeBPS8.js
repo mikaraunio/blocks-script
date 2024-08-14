@@ -44,6 +44,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             _this.mReadQuality = 3;
             _this.mReadQualityString = '';
             _this.mReadTimeout = false;
+            _this.samplesRead = 0;
             socket.subscribe('connect', function () { return _this.connectStateChanged(); });
             socket.subscribe('bytesReceived', function (_, msg) { return _this.bytesReceived(msg.rawData); });
             socket.subscribe('finish', function () { return _this.tearDownConnection(); });
@@ -158,6 +159,10 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
         };
         LeuzeBPS8.prototype.bytesReceived = function (bytes) {
             this.leuzeProcessData(bytes);
+            this.samplesRead++;
+            if (this.samplesRead % 100 == 0) {
+                console.log('Samples read', this.samplesRead);
+            }
             if (this.timeoutTimer) {
                 this.timeoutTimer.cancel();
             }
