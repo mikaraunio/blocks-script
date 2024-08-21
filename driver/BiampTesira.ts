@@ -3,7 +3,7 @@ import { Driver } from "system_lib/Driver";
 import * as Meta from "system_lib/Metadata";
 
 @Meta.driver("NetworkTCP", { port: 23 })
-export class BiAmpTesira extends Driver<NetworkTCP> {
+export class BiampTesira extends Driver<NetworkTCP> {
 
 	private mConnected = false; // Connected to device
 	private mReady = false; // Negotiation completed
@@ -30,7 +30,7 @@ export class BiAmpTesira extends Driver<NetworkTCP> {
 			this.biAmpTesiraNegotiate();
 	}
 
-	@Meta.property("Connected to BiAmp", true)
+	@Meta.property("Connected to Biamp", true)
 	public set connected(online: boolean) {
 		this.mConnected = online;
 	}
@@ -38,7 +38,7 @@ export class BiAmpTesira extends Driver<NetworkTCP> {
 		return this.mConnected;
 	}
 
-	@Meta.property("Negotiation completed with BiAmp", true)
+	@Meta.property("Negotiation completed with Biamp", true)
 	public set negotiated(online: boolean) {
 		this.mReady = online;
 	}
@@ -66,7 +66,7 @@ export class BiAmpTesira extends Driver<NetworkTCP> {
 	}
 
 	/**
-	 * Got the data from BiAmp Tesira Device
+	 * Got the data from Biamp Tesira Device
 	 */
 	private textReceived(rawData: any) {
 		// Converts the rawData into hex
@@ -79,7 +79,7 @@ export class BiAmpTesira extends Driver<NetworkTCP> {
 	}
 
 	/**
-	 * Negotiate with BiAmp Tesira device
+	 * Negotiate with Biamp Tesira device
 	 *
 	 */
 	private biAmpTesiraNegotiate() {

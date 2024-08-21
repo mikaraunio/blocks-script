@@ -25,10 +25,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], function (require, exports, Driver_1, Meta) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.BiAmpTesira = void 0;
-    var BiAmpTesira = (function (_super) {
-        __extends(BiAmpTesira, _super);
-        function BiAmpTesira(socket) {
+    exports.BiampTesira = void 0;
+    var BiampTesira = (function (_super) {
+        __extends(BiampTesira, _super);
+        function BiampTesira(socket) {
             var _this = _super.call(this, socket) || this;
             _this.socket = socket;
             _this.mConnected = false;
@@ -47,7 +47,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
                 _this.biAmpTesiraNegotiate();
             return _this;
         }
-        Object.defineProperty(BiAmpTesira.prototype, "connected", {
+        Object.defineProperty(BiampTesira.prototype, "connected", {
             get: function () {
                 return this.mConnected;
             },
@@ -57,7 +57,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             enumerable: false,
             configurable: true
         });
-        Object.defineProperty(BiAmpTesira.prototype, "negotiated", {
+        Object.defineProperty(BiampTesira.prototype, "negotiated", {
             get: function () {
                 return this.mReady;
             },
@@ -67,7 +67,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             enumerable: false,
             configurable: true
         });
-        Object.defineProperty(BiAmpTesira.prototype, "volume", {
+        Object.defineProperty(BiampTesira.prototype, "volume", {
             get: function () {
                 return this.mLastSetVolume;
             },
@@ -78,18 +78,18 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             enumerable: false,
             configurable: true
         });
-        BiAmpTesira.prototype.connectStateChanged = function () {
+        BiampTesira.prototype.connectStateChanged = function () {
             console.info("connectStateChanged", this.socket.connected);
             this.connected = this.socket.connected;
             if (this.socket.connected)
                 this.biAmpTesiraNegotiate();
         };
-        BiAmpTesira.prototype.textReceived = function (rawData) {
+        BiampTesira.prototype.textReceived = function (rawData) {
             var hex = this.toHex(rawData);
             var ascii = this.toAscii(hex);
             this.biAmpTesiraNegotiate();
         };
-        BiAmpTesira.prototype.biAmpTesiraNegotiate = function () {
+        BiampTesira.prototype.biAmpTesiraNegotiate = function () {
             if (this.socket.connected) {
                 var response = void 0, converted = void 0;
                 if (this.negotiationState < 3) {
@@ -119,7 +119,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
                 }
             }
         };
-        BiAmpTesira.prototype.toHex = function (bytes) {
+        BiampTesira.prototype.toHex = function (bytes) {
             var result = '';
             for (var i = 0; i < bytes.length; ++i) {
                 var byte = bytes[i];
@@ -128,14 +128,14 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             }
             return (result);
         };
-        BiAmpTesira.prototype.toAscii = function (data) {
+        BiampTesira.prototype.toAscii = function (data) {
             var hex = data.toString()
                 .replace(/ /g, ''), str = '';
             for (var i = 0; i < hex.length; i += 2)
                 str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
             return str;
         };
-        BiAmpTesira.prototype.convert = function (str) {
+        BiampTesira.prototype.convert = function (str) {
             var bytes = [];
             var bytes2 = [];
             var bytes3 = [];
@@ -147,30 +147,30 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             }
             return bytes3;
         };
-        BiAmpTesira.prototype.tell = function (data) {
+        BiampTesira.prototype.tell = function (data) {
             var bytes = this.convert(data + '\x0a');
             this.socket.sendBytes(bytes);
         };
         __decorate([
-            Meta.property("Connected to BiAmp", true),
+            Meta.property("Connected to Biamp", true),
             __metadata("design:type", Boolean),
             __metadata("design:paramtypes", [Boolean])
-        ], BiAmpTesira.prototype, "connected", null);
+        ], BiampTesira.prototype, "connected", null);
         __decorate([
-            Meta.property("Negotiation completed with BiAmp", true),
+            Meta.property("Negotiation completed with Biamp", true),
             __metadata("design:type", Boolean),
             __metadata("design:paramtypes", [Boolean])
-        ], BiAmpTesira.prototype, "negotiated", null);
+        ], BiampTesira.prototype, "negotiated", null);
         __decorate([
             Meta.property("Volume", true),
             __metadata("design:type", Number),
             __metadata("design:paramtypes", [Number])
-        ], BiAmpTesira.prototype, "volume", null);
-        BiAmpTesira = __decorate([
+        ], BiampTesira.prototype, "volume", null);
+        BiampTesira = __decorate([
             Meta.driver("NetworkTCP", { port: 23 }),
             __metadata("design:paramtypes", [Object])
-        ], BiAmpTesira);
-        return BiAmpTesira;
+        ], BiampTesira);
+        return BiampTesira;
     }(Driver_1.Driver));
-    exports.BiAmpTesira = BiAmpTesira;
+    exports.BiampTesira = BiampTesira;
 });
