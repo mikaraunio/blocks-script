@@ -26,6 +26,9 @@ export class PJLink extends NetworkProjector {
 			PJLink.kMinInput, PJLink.kMaxInput, () => this._power.getCurrent()
 		));
 
+		this.setKeepAlive(false);			// Makes the keepAlive false, meaning this runs the new approach
+		this.setPollFrequency(60000)		// Sets the poll frequency to 1 minute (value in milliseconds). To run the keep alive true, we can comment this line (it has a default val)
+
 		this.poll();	// Get polling going
 		this.attemptConnect();	// Attempt initial connection
 		// console.info("inited");
@@ -85,11 +88,14 @@ export class PJLink extends NetworkProjector {
 	 Send queries to obtain the initial state of the projector.
 	 */
 	private getInitialState() {
-		this.connected = false;	// Mark me as not yet fully awake, to hold off commands
+		if(this.keepAlive)
+			this.connected = false;	// Mark me as not yet fully awake, to hold off commands
+
 		this.request('POWR').then(
 			reply => {
 				if (!this.inCmdHoldoff())
 					this._power.updateCurrent((parseInt(reply) & 1) != 0);
+				
 				if (this._power.get()) // Power on - proceed quering input
 					this.getInputState();
 				else {
@@ -180,6 +186,10 @@ export class PJLink extends NetworkProjector {
 	 */
 	protected textReceived(text: string): void {
 		text = text.toUpperCase();	// Some brands send lower case responses
+		if (!this.keepAlive){
+			this.resetTimeout();
+		}
+
 		if (text.indexOf('PJLINK ') === 0) {	// Initial handshake sent spontaneously by projector
 			if (this.unauthenticated = (text.indexOf('PJLINK 1') === 0))
 				this.errorMsg("PJLink authentication not supported");

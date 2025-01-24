@@ -59,7 +59,7 @@ export class Xicato extends Driver<NetworkTCP> {
 
         // no auto-connect needed since REST API
         const settingsFileName = XIC_CONFIG_BASE_PATH + '/' + socket.name + '.config';
-        const dataPath = XIC_CONFIG_BASE_PATH + '/' + socket.name + '';
+        const dataPath = XIC_CONFIG_BASE_PATH + '/' + socket.name;
         this.devicesFileName = dataPath + '/devices.json';
         this.groupsFileName = dataPath + '/groups.json';
         this.scenesFileName = dataPath + '/scenes.json';
@@ -72,7 +72,7 @@ export class Xicato extends Driver<NetworkTCP> {
             this.mPassword = settings.password;
 
             this.mAlive = true;
-      		this.mBaseURL = 'http://' + socket.address + ':' + socket.port + '/';
+      		this.mBaseURL = 'http://' + socket.address + ':' + socket.port + '';
 
             if (socket.enabled) {
       			socket.subscribe('finish', _sender => {
@@ -381,7 +381,7 @@ export class Xicato extends Driver<NetworkTCP> {
 
 
     private authenticationPoll() {
-  		SimpleHTTP.newRequest(this.mBaseURL + 'api/token').
+  		SimpleHTTP.newRequest(this.mBaseURL + '/api/token').
         header('Authorization', 'Basic ' + this.toBase64(this.mUsername + ':' + this.mPassword)).
         get().
         then(response=> {

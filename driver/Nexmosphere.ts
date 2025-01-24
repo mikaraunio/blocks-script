@@ -382,7 +382,7 @@ class RfidInterface extends BaseInterface {
 	private mTagNumber = 0;
 	private mIsPlaced = false;
 
-	@property("Last recieved RFID tag ID", true)
+	@property("Last recieved RFID tag ID", false)
 	get tagNumber(): number {
 		return this.mTagNumber;
 	}
@@ -412,7 +412,7 @@ class NfcInterface extends BaseInterface {
 	private mTagUID = "";
 	private mIsPlaced = false;
 
-	@property("Last recieved tag UID", true)
+	@property("Last recieved tag UID", false)
 	get tagUID(): string { return this.mTagUID; }
 	set tagUID(value: string) { this.mTagUID = value; }
 
@@ -504,6 +504,9 @@ class TimeOfFlightInterface extends BaseInterface {
 	private mTrigger5: boolean = false;
 	private mTrigger6: boolean = false;
 	private mTrigger7: boolean = false;
+	private mTrigger8: boolean = false;
+	private mTrigger9: boolean = false;
+	private mTrigger10: boolean = false;
 
 	@property("Proximity zone", true)
 	get proximity(): number { return this.mProximity; }
@@ -545,6 +548,18 @@ class TimeOfFlightInterface extends BaseInterface {
 	get triggerOn7(): boolean { return this.mTrigger7; }
 	set triggerOn7(value: boolean) { this.mTrigger7 = value; }
 
+	@property("Proximity 8 or below", true)
+	get triggerOn8(): boolean { return this.mTrigger8; }
+	set triggerOn8(value: boolean) { this.mTrigger8 = value; }
+
+	@property("Proximity 9 or below", true)
+	get triggerOn9(): boolean { return this.mTrigger9; }
+	set triggerOn9(value: boolean) { this.mTrigger9 = value; }
+
+	@property("Proximity 10 or below", true)
+	get triggerOn10(): boolean { return this.mTrigger10; }
+	set triggerOn10(value: boolean) { this.mTrigger10 = value; }
+
 	receiveData(data: string) {
 		const splitData = data.split("=");
 		const sensorValue = splitData[1];
@@ -556,7 +571,7 @@ class TimeOfFlightInterface extends BaseInterface {
 				break;
 			case "XX":
 				this.airButton = false;
-				this.proximity = 8; //We define indefinite as zone 8
+				this.proximity = 999; //We define indefinite as zone 999
 				break;
 			default:	// Assume others are zone numbers
 				const proximity = parseInt(sensorValue);
@@ -573,6 +588,9 @@ class TimeOfFlightInterface extends BaseInterface {
 		this.triggerOn5 = this.proximity <= 5;
 		this.triggerOn6 = this.proximity <= 6;
 		this.triggerOn7 = this.proximity <= 7;
+		this.triggerOn8 = this.proximity <= 8;
+		this.triggerOn9 = this.proximity <= 9;
+		this.triggerOn10 = this.proximity <= 10;
 
 	}
 
@@ -580,7 +598,7 @@ class TimeOfFlightInterface extends BaseInterface {
 		return "TOF";
 	}
 }
-Nexmosphere.registerInterface(TimeOfFlightInterface, "XY241");
+Nexmosphere.registerInterface(TimeOfFlightInterface, "XY240","XY241");
 
 /**
  *Model a Gesture detector interface.
@@ -785,7 +803,7 @@ Nexmosphere.registerInterface(RotaryEncoderInterface, "XDWE60");
  *	in front of the sensor (e.g., a camera).
  */
 class GenderInterface extends BaseInterface {
-	private static readonly kParser = /^(0|1)(M|F|U)(X|L|H)([0-7])(X|L|H)(L|C|R|U)/;
+	private static readonly kParser = /^(0|1)(M|F|U)(X|L|H)([0-8])(X|L|H)(L|C|R|U)/;
 	// private subProp: GenderSubProperty<any>[];
 	private mIsPerson = false;
 	private mGender = 'U';
@@ -806,7 +824,7 @@ class GenderInterface extends BaseInterface {
 	get genderConfidence(): string { return this.mGenderConfidence; }
 	set genderConfidence(value: string) { this.mGenderConfidence = value; }
 
-	@property("Age range 0...7", true)
+	@property("Age range 0...8", true)
 	get age(): number { return this.mAge; }
 	set age(value: number) { this.mAge = value; }
 
@@ -823,7 +841,7 @@ class GenderInterface extends BaseInterface {
 		P= Person detection 0= No Person, 1=Person detected
 		G= M=Male, F=Female, U=Unidentified
 		C= Confidence level gender X = Very Low, L=Low, H=High
-		A= Age range estimation value between 0-7
+		A= Age range estimation value between 0-8
 		C= Confidence level age X = Very Low, L=Low, H=High
 		G= Gaze indication L=Left, C=Center, R=Right, U=Unidentified
 	*/

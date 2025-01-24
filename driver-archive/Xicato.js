@@ -39,7 +39,7 @@ define(["require", "exports", "system/SimpleHTTP", "system/SimpleFile", "system_
         function Xicato(socket) {
             var _this = _super.call(this, socket) || this;
             var settingsFileName = XIC_CONFIG_BASE_PATH + '/' + socket.name + '.config';
-            var dataPath = XIC_CONFIG_BASE_PATH + '/' + socket.name + '';
+            var dataPath = XIC_CONFIG_BASE_PATH + '/' + socket.name;
             _this.devicesFileName = dataPath + '/devices.json';
             _this.groupsFileName = dataPath + '/groups.json';
             _this.scenesFileName = dataPath + '/scenes.json';
@@ -48,7 +48,7 @@ define(["require", "exports", "system/SimpleHTTP", "system/SimpleFile", "system_
                 _this.mUsername = settings.username;
                 _this.mPassword = settings.password;
                 _this.mAlive = true;
-                _this.mBaseURL = 'http://' + socket.address + ':' + socket.port + '/';
+                _this.mBaseURL = 'http://' + socket.address + ':' + socket.port + '';
                 if (socket.enabled) {
                     socket.subscribe('finish', function (_sender) {
                         _this.onFinish();
@@ -285,7 +285,7 @@ define(["require", "exports", "system/SimpleHTTP", "system/SimpleFile", "system_
         };
         Xicato.prototype.authenticationPoll = function () {
             var _this = this;
-            SimpleHTTP_1.SimpleHTTP.newRequest(this.mBaseURL + 'api/token').
+            SimpleHTTP_1.SimpleHTTP.newRequest(this.mBaseURL + '/api/token').
                 header('Authorization', 'Basic ' + this.toBase64(this.mUsername + ':' + this.mPassword)).
                 get().
                 then(function (response) {

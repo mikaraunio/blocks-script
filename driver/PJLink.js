@@ -32,6 +32,8 @@ define(["require", "exports", "driver/NetworkProjector", "system_lib/Metadata"],
             var _this = _super.call(this, socket) || this;
             _this.addState(_this._power = new NetworkProjector_1.BoolState('POWR', 'power'));
             _this.addState(_this._input = new NetworkProjector_1.NumState('INPT', 'input', PJLink_1.kMinInput, PJLink_1.kMaxInput, function () { return _this._power.getCurrent(); }));
+            _this.setKeepAlive(false);
+            _this.setPollFrequency(60000);
             _this.poll();
             _this.attemptConnect();
             return _this;
@@ -72,7 +74,8 @@ define(["require", "exports", "driver/NetworkProjector", "system_lib/Metadata"],
         });
         PJLink.prototype.getInitialState = function () {
             var _this = this;
-            this.connected = false;
+            if (this.keepAlive)
+                this.connected = false;
             this.request('POWR').then(function (reply) {
                 if (!_this.inCmdHoldoff())
                     _this._power.updateCurrent((parseInt(reply) & 1) != 0);
@@ -135,6 +138,9 @@ define(["require", "exports", "driver/NetworkProjector", "system_lib/Metadata"],
         };
         PJLink.prototype.textReceived = function (text) {
             text = text.toUpperCase();
+            if (!this.keepAlive) {
+                this.resetTimeout();
+            }
             if (text.indexOf('PJLINK ') === 0) {
                 if (this.unauthenticated = (text.indexOf('PJLINK 1') === 0))
                     this.errorMsg("PJLink authentication not supported");

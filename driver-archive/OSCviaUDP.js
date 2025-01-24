@@ -51,8 +51,8 @@ define(["require", "exports", "system_lib/Metadata", "system_lib/Metadata", "../
         function OSCviaUDP(socket) {
             var _this = _super.call(this, socket) || this;
             _this.socket = socket;
-            _this.regExFloat = /^[-\+]?\d+\.\d+$/;
-            _this.regExInteger = /^[-\+]?\d+$/;
+            _this.regExFloat = /^[-+]?\d+\.\d+$/;
+            _this.regExInteger = /^[-+]?\d+$/;
             _this.regExBoolean = /^false|true$/;
             return _this;
         }
@@ -63,7 +63,6 @@ define(["require", "exports", "system_lib/Metadata", "system_lib/Metadata", "../
             get: function () {
                 return this.socket.enabled;
             },
-            set: function (_conn) { },
             enumerable: false,
             configurable: true
         });
@@ -224,14 +223,14 @@ define(["require", "exports", "system_lib/Metadata", "system_lib/Metadata", "../
                 Math.abs(value) <= MAX_SAFE_INT;
         };
         __decorate([
-            (0, Metadata_1.property)("True if driver is enabled", true),
+            (0, Metadata_1.property)("True if driver is enabled"),
             __metadata("design:type", Boolean),
-            __metadata("design:paramtypes", [Boolean])
+            __metadata("design:paramtypes", [])
         ], OSCviaUDP.prototype, "connected", null);
         __decorate([
             Meta.callable('send OSC message'),
-            __param(0, Meta.parameter('OSC address')),
-            __param(1, Meta.parameter('Comma separated value list. fx to send the values 1 (int), 2.0 (float), and "hello" (string) "1, 2.0, \'hello\'".', true)),
+            __param(0, Meta.parameter('OSC address (path)')),
+            __param(1, Meta.parameter('Comma separated value list. E.g., to send the values 1 (int), 2.0 (float), and "hello" (string) "1, 2.0, \'hello\'".', true)),
             __metadata("design:type", Function),
             __metadata("design:paramtypes", [String, String]),
             __metadata("design:returntype", void 0)
