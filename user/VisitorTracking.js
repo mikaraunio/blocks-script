@@ -1,0 +1,255 @@
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system_lib/Metadata", "../lib/VisitorData"], function (require, exports, Spot_1, ScriptBase_1, Metadata_1, VisitorData_1) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.VisitorTracking = void 0;
+    var DEBUG = true;
+    var QRCodeAndPhoneData = (function (_super) {
+        __extends(QRCodeAndPhoneData, _super);
+        function QRCodeAndPhoneData() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        __decorate([
+            (0, Metadata_1.id)(),
+            __metadata("design:type", String)
+        ], QRCodeAndPhoneData.prototype, "idCode", void 0);
+        __decorate([
+            (0, Metadata_1.id)(),
+            __metadata("design:type", String)
+        ], QRCodeAndPhoneData.prototype, "phone", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", String)
+        ], QRCodeAndPhoneData.prototype, "name", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", String)
+        ], QRCodeAndPhoneData.prototype, "currentStation", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", Number)
+        ], QRCodeAndPhoneData.prototype, "whenJoined", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", String)
+        ], QRCodeAndPhoneData.prototype, "email", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", Boolean)
+        ], QRCodeAndPhoneData.prototype, "briefed", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", Number)
+        ], QRCodeAndPhoneData.prototype, "quizScore", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", Number)
+        ], QRCodeAndPhoneData.prototype, "speakerTall", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", Number)
+        ], QRCodeAndPhoneData.prototype, "totalScore", void 0);
+        QRCodeAndPhoneData = __decorate([
+            (0, Metadata_1.record)("Data we track for each visitor")
+        ], QRCodeAndPhoneData);
+        return QRCodeAndPhoneData;
+    }(ScriptBase_1.RecordBase));
+    var VisitorTracking = (function (_super) {
+        __extends(VisitorTracking, _super);
+        function VisitorTracking(env) {
+            var _this = _super.call(this, env) || this;
+            _this.addStation(new Reception("VisitorTracking.TouchLeft", _this));
+            _this.addStation(new GoodByeStation("VisitorTracking.ScreenRight", _this));
+            _this.addStation(new InfoStation("VisitorTracking.ScreenLeft", _this));
+            return _this;
+        }
+        VisitorTracking.prototype.deleteAllVisitors = function (archive) {
+            _super.prototype.deleteRecords.call(this, QRCodeAndPhoneData, archive);
+            log("Deleted All");
+        };
+        VisitorTracking.prototype.simulateRfid = function (spotPath, rfidCode) {
+            var station = this.getStationForSpotPath(spotPath);
+            if (station)
+                station.simulateRfid(rfidCode);
+            else
+                throw "No such station/spot path";
+        };
+        __decorate([
+            (0, Metadata_1.callable)("Discard all visitors of the last day. Call nightly."),
+            __param(0, (0, Metadata_1.parameter)("Archive log files rather than deleting them")),
+            __metadata("design:type", Function),
+            __metadata("design:paramtypes", [Boolean]),
+            __metadata("design:returntype", void 0)
+        ], VisitorTracking.prototype, "deleteAllVisitors", null);
+        __decorate([
+            (0, Metadata_1.callable)("Spoon-feed an RFID code as being scanned at a Spot"),
+            __param(0, (0, Metadata_1.parameter)("Spot path, e.g. 'TwoScreens.Left'")),
+            __param(1, (0, Metadata_1.parameter)("Code being scanned at Spot")),
+            __metadata("design:type", Function),
+            __metadata("design:paramtypes", [String, String]),
+            __metadata("design:returntype", void 0)
+        ], VisitorTracking.prototype, "simulateRfid", null);
+        return VisitorTracking;
+    }(VisitorData_1.VisitorScriptBase));
+    exports.VisitorTracking = VisitorTracking;
+    var Station = (function (_super) {
+        __extends(Station, _super);
+        function Station() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        Station.prototype.init = function () {
+            var _this = this;
+            this.getSpotPropertyAccessor("scannerInput", function (code) {
+                if (code)
+                    _this.gotIdCode(code);
+            });
+            _super.prototype.init.call(this);
+        };
+        Station.prototype.recordFromRfidCode = function (rfidCode) {
+            return this.owner.getRecordSec(QRCodeAndPhoneData, 'idCode', rfidCode);
+        };
+        Station.prototype.simulateRfid = function (code) {
+            this.gotIdCode(code);
+        };
+        return Station;
+    }(VisitorData_1.StationBase));
+    var Reception = (function (_super) {
+        __extends(Reception, _super);
+        function Reception(spotPath, owner) {
+            return _super.call(this, spotPath, owner) || this;
+        }
+        Reception.prototype.init = function () {
+            var _this = this;
+            this.nameProp = this.getSpotParameterAccessor("name", function (updatedName) { return _this.getCurrVisitor().name = updatedName; });
+            this.email = this.getSpotParameterAccessor("email", function (updatedEmail) { return _this.getCurrVisitor().email = updatedEmail; });
+            this.messageProp = this.getSpotParameterAccessor("message");
+            _super.prototype.init.call(this);
+        };
+        Reception.prototype.gotIdCode = function (idCode) {
+            var _this = this;
+            var record = this.recordFromRfidCode(idCode);
+            if (record) {
+                log("Reception returning visitor", record.name, record.$puid);
+                this.messageProp.value = "Hello again " + record.name;
+            }
+            else {
+                record = this.owner.newRecord(QRCodeAndPhoneData);
+                log("Reception new visitor ID", idCode, record.$puid);
+                record.whenJoined = Date.now();
+                record.idCode = idCode;
+                this.messageProp.value = "Welcome!";
+            }
+            var otherVisitor = this.hasVisitor() && !this.isCurrentVisitor(record);
+            this.gotVisitor(record);
+            if (otherVisitor) {
+                wait(200).then(function () { return _this.activateByGotoBlock(true); });
+            }
+            else
+                this.activateByGotoBlock(true);
+        };
+        Reception.prototype.receivedVisitor = function (visitorData) {
+            log("Reception received visitor name", visitorData.name, visitorData.$puid);
+            _super.prototype.receivedVisitor.call(this, visitorData);
+            this.nameProp.value = visitorData.name;
+            this.email.value = visitorData.email;
+            return true;
+        };
+        Reception.prototype.lostVisitor = function (visitor) {
+            this.activateByGotoBlock(false);
+            _super.prototype.lostVisitor.call(this, visitor);
+        };
+        return Reception;
+    }(Station));
+    var InfoStation = (function (_super) {
+        __extends(InfoStation, _super);
+        function InfoStation(spotPath, owner) {
+            return _super.call(this, spotPath, owner) || this;
+        }
+        InfoStation.prototype.init = function () {
+            this.nameProp = this.getSpotParameterAccessor("name");
+            _super.prototype.init.call(this);
+        };
+        InfoStation.prototype.gotIdCode = function (idCode) {
+            log("Info station receved RFID", idCode);
+            var record = this.recordFromRfidCode(idCode);
+            if (record)
+                this.gotVisitor(record);
+            else
+                Spot_1.Spot[this.spotPath].gotoBlock("/Active/Visitor/Unknown");
+        };
+        InfoStation.prototype.receivedVisitor = function (visitorData) {
+            _super.prototype.receivedVisitor.call(this, visitorData);
+            this.nameProp.value = visitorData.name;
+            if (visitorData.briefed)
+                this.gotoBlock("/Active/Visitor/AlreadyBriefed");
+            else {
+                this.gotoBlock("/Active/Visitor/Brief");
+                visitorData.briefed = true;
+            }
+            return true;
+        };
+        InfoStation.prototype.lostVisitor = function (visitor) {
+            this.gotoBlock("Passive");
+            _super.prototype.lostVisitor.call(this, visitor);
+        };
+        return InfoStation;
+    }(Station));
+    var GoodByeStation = (function (_super) {
+        __extends(GoodByeStation, _super);
+        function GoodByeStation(spotPath, owner) {
+            var _this = _super.call(this, spotPath, owner) || this;
+            _this.spotPath = spotPath;
+            return _this;
+        }
+        GoodByeStation.prototype.init = function () {
+            this.nameProp = this.getSpotParameterAccessor("name");
+            _super.prototype.init.call(this);
+        };
+        GoodByeStation.prototype.gotIdCode = function (idCode) {
+            log("GoodByeStation got ID", idCode);
+            this.gotVisitor(this.recordFromRfidCode(idCode));
+        };
+        GoodByeStation.prototype.receivedVisitor = function (visitorData) {
+            _super.prototype.receivedVisitor.call(this, visitorData);
+            this.nameProp.value = visitorData.name || "nameless person";
+            this.activateByGotoBlock(true);
+            this.owner.leftTheBuilding(visitorData);
+            return true;
+        };
+        return GoodByeStation;
+    }(Station));
+    function log() {
+        var messages = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            messages[_i] = arguments[_i];
+        }
+        if (DEBUG)
+            console.info(messages);
+    }
+});
