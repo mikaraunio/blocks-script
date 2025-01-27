@@ -16,27 +16,27 @@
 import {MobileSpot, DisplaySpot, Spot, Visitor} from "system/Spot";
 import {ScriptEnv, PropertyAccessor} from "system_lib/Script";
 import {RecordBase} from "../system_lib/ScriptBase";
-import {record, field, id, callable, parameter} from "system_lib/Metadata";
-import {StationBase, VisitorRecordBase, VisitorScriptBase} from "../lib/VisitorData";
+import {record, field, id, callable, parameter, spotParameter} from "system_lib/Metadata";
+import {StationBase, VisitorRecordBase, VisitorScriptBase, VisitorPhoneBase} from "../lib/VisitorData";
 
 // Constants you may want to change:
 const DEBUG = true;	// Set to false to disable verbose logging
 const kMobileSpot = "Visitor";
 
-
 @record("Data we track for each visitor")
 class QRCodeAndPhoneData extends RecordBase implements VisitorRecordBase {
 	@id() 	 idCode: string;		// QR Code associated with this record
 	@id() 	 phone: string;		    // Phone associated with this record
-	@field() name: string;			// Name provided by visitor
+	@field() @spotParameter() name: string;			// Name provided by visitor
+	@field() @spotParameter() color: string;			// Favorite color provided by visitor
+	@field() @spotParameter() email: string;			// Email address provided by visitor
 	@field() currentStation: string; // Curently (or last) visited station
 	@field() whenJoined: number;	// UNIX timestamp when first connected
-	@field() email: string;			// Email address
 	@field() briefed: boolean;		// The visitor has been briefed at the info station
-	@field() quizScore: number;		// Score frmo Quiz game (except how tall speaker is)
-	@field() speakerTall: number;	// How tall the speaker is
-	@field() totalScore: number;	// Final score total
 	@field() location: string;	  // Most recenly reported location (from Locator block)
+}
+
+class VisitorPhone extends VisitorPhoneBase<QRCodeAndPhoneData, Station> {
 }
 
 /*	My main class, implementing this user script. I inherit most functionality from my
@@ -44,7 +44,7 @@ class QRCodeAndPhoneData extends RecordBase implements VisitorRecordBase {
 	as well as the type of my Stations (defined elsewhere in this file). Since I don't
 	use visitors' phones at all, I omit the last parameter to VisitorScriptBase.
  */
-export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneData> {
+export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneData, VisitorPhone> {
 	constructor(env : ScriptEnv) {
 		super(env);
 
@@ -84,6 +84,11 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 			throw "No such station/spot path"
 	}
 
+	gotPhone(phone: VisitorPhone): void {
+		super.gotPhone(phone);
+		log('got phone', phone);
+	}
+
 	private listenForVisitors() {
 		const mobile = Spot[kMobileSpot] as MobileSpot;	// Get designated Spot
 
@@ -111,6 +116,8 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 	 * associated with each visitor.
 	 */
 	private gotVisitorConnection(visitor: Visitor<QRCodeAndPhoneData>) {
+		let phone = new VisitorPhone(this, visitor, QRCodeAndPhoneData);
+		phone.init();
     log(visitor);
     log(visitor.identity);
     log(visitor.record);
@@ -222,14 +229,14 @@ class Reception extends Station {
 			this.messageProp.value = "Welcome!";
 		}
 
-		const otherVisitor = this.hasVisitor() && !this.isCurrentVisitor(record);
+		// const otherVisitor = this.hasVisitor() && !this.isCurrentVisitor(record);
 		this.gotVisitor(record);
 
-		if (otherVisitor) {
-			// Wait a bit to make sure it deactivates before being re-activated
-			wait(200).then(() => this.activateByGotoBlock(true));
-		} else
-			this.activateByGotoBlock(true);
+		// if (otherVisitor) {
+		// 	// Wait a bit to make sure it deactivates before being re-activated
+		// 	wait(200).then(() => this.activateByGotoBlock(true));
+		// } else
+		// 	this.activateByGotoBlock(true);
 	}
 
 	// Got a visitor. Present visitor's current data on UI

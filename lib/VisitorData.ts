@@ -10,7 +10,7 @@ import { BaseSpot, Spot, Visitor } from "../system/Spot";
 import { PropertyAccessor, Script } from "../system_lib/Script";
 import { PrimitiveValue, RecordBase } from "../system_lib/ScriptBase";
 
-const DEBUG = false;	// Controls verbose logging
+const DEBUG = true;	// Controls verbose logging
 
 // What I expect from the data record
 export interface VisitorRecordBase extends RecordBase {
@@ -370,9 +370,11 @@ export class VisitorPhoneBase<
 		/*	Listen for tagId parameter, passed in using QR code as query parameter of URL,
 			allowing me to bind the mobile to its corresponding data record.
 		*/
+	       log(this.getSpotParamPath('tagId'));
 		this.tagId = owner.getProperty<string>(
 			this.getSpotParamPath('tagId'),
 			(tagId) => {
+				log('tagId', tagId);
 				if (tagId)
 					// Ignore empty string – may see that initially
 					this.gotVisitorTagID(tagId);

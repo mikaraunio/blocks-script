@@ -46,8 +46,19 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         ], QRCodeAndPhoneData.prototype, "phone", void 0);
         __decorate([
             (0, Metadata_1.field)(),
+            (0, Metadata_1.spotParameter)(),
             __metadata("design:type", String)
         ], QRCodeAndPhoneData.prototype, "name", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            (0, Metadata_1.spotParameter)(),
+            __metadata("design:type", String)
+        ], QRCodeAndPhoneData.prototype, "color", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            (0, Metadata_1.spotParameter)(),
+            __metadata("design:type", String)
+        ], QRCodeAndPhoneData.prototype, "email", void 0);
         __decorate([
             (0, Metadata_1.field)(),
             __metadata("design:type", String)
@@ -58,24 +69,8 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         ], QRCodeAndPhoneData.prototype, "whenJoined", void 0);
         __decorate([
             (0, Metadata_1.field)(),
-            __metadata("design:type", String)
-        ], QRCodeAndPhoneData.prototype, "email", void 0);
-        __decorate([
-            (0, Metadata_1.field)(),
             __metadata("design:type", Boolean)
         ], QRCodeAndPhoneData.prototype, "briefed", void 0);
-        __decorate([
-            (0, Metadata_1.field)(),
-            __metadata("design:type", Number)
-        ], QRCodeAndPhoneData.prototype, "quizScore", void 0);
-        __decorate([
-            (0, Metadata_1.field)(),
-            __metadata("design:type", Number)
-        ], QRCodeAndPhoneData.prototype, "speakerTall", void 0);
-        __decorate([
-            (0, Metadata_1.field)(),
-            __metadata("design:type", Number)
-        ], QRCodeAndPhoneData.prototype, "totalScore", void 0);
         __decorate([
             (0, Metadata_1.field)(),
             __metadata("design:type", String)
@@ -85,6 +80,13 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         ], QRCodeAndPhoneData);
         return QRCodeAndPhoneData;
     }(ScriptBase_1.RecordBase));
+    var VisitorPhone = (function (_super) {
+        __extends(VisitorPhone, _super);
+        function VisitorPhone() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        return VisitorPhone;
+    }(VisitorData_1.VisitorPhoneBase));
     var VisitorTracking = (function (_super) {
         __extends(VisitorTracking, _super);
         function VisitorTracking(env) {
@@ -104,6 +106,10 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             else
                 throw "No such station/spot path";
         };
+        VisitorTracking.prototype.gotPhone = function (phone) {
+            _super.prototype.gotPhone.call(this, phone);
+            log('got phone', phone);
+        };
         VisitorTracking.prototype.listenForVisitors = function () {
             var _this = this;
             var mobile = Spot_1.Spot[kMobileSpot];
@@ -118,6 +124,8 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
                 console.log(kMobileSpot, "is not a MobileSpot");
         };
         VisitorTracking.prototype.gotVisitorConnection = function (visitor) {
+            var phone = new VisitorPhone(this, visitor, QRCodeAndPhoneData);
+            phone.init();
             log(visitor);
             log(visitor.identity);
             log(visitor.record);
@@ -187,7 +195,6 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             _super.prototype.init.call(this);
         };
         Reception.prototype.gotIdCode = function (idCode) {
-            var _this = this;
             var record = this.recordFromRfidCode(idCode);
             if (record) {
                 log("Reception returning visitor", record.name, record.$puid);
@@ -200,13 +207,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
                 record.idCode = idCode;
                 this.messageProp.value = "Welcome!";
             }
-            var otherVisitor = this.hasVisitor() && !this.isCurrentVisitor(record);
             this.gotVisitor(record);
-            if (otherVisitor) {
-                wait(200).then(function () { return _this.activateByGotoBlock(true); });
-            }
-            else
-                this.activateByGotoBlock(true);
         };
         Reception.prototype.receivedVisitor = function (visitorData) {
             log("Reception received visitor name", visitorData.name, visitorData.$puid);
