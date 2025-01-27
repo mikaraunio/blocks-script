@@ -84,9 +84,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         __extends(VisitorTracking, _super);
         function VisitorTracking(env) {
             var _this = _super.call(this, env) || this;
-            _this.addStation(new Reception("VisitorTracking.TouchLeft", _this));
-            _this.addStation(new GoodByeStation("VisitorTracking.ScreenRight", _this));
-            _this.addStation(new InfoStation("VisitorTracking.ScreenLeft", _this));
+            _this.addStation(new Reception("1_Regi", _this));
             return _this;
         }
         VisitorTracking.prototype.deleteAllVisitors = function (archive) {
@@ -126,8 +124,10 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         Station.prototype.init = function () {
             var _this = this;
             this.getSpotPropertyAccessor("scannerInput", function (code) {
-                if (code)
+                if (code) {
                     _this.gotIdCode(code);
+                    log('XXX got code', code);
+                }
             });
             _super.prototype.init.call(this);
         };

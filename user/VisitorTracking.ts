@@ -47,9 +47,9 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 		super(env);
 
 		// Establish the "stations" (here only display spots) being used
-		this.addStation(new Reception("VisitorTracking.TouchLeft", this));
-		this.addStation(new GoodByeStation("VisitorTracking.ScreenRight",this));
-		this.addStation(new InfoStation("VisitorTracking.ScreenLeft",this));
+		this.addStation(new Reception("1_Regi", this));
+		// this.addStation(new GoodByeStation("VisitorTracking.ScreenRight",this));
+		// this.addStation(new InfoStation("VisitorTracking.ScreenLeft",this));
 	}
 
 	/**
@@ -99,8 +99,10 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
 	init() {
 		// Accept tag codes from spot's scannerInput property
 		this.getSpotPropertyAccessor<string>("scannerInput", code => {
-			if (code)
+			if (code) {
 				this.gotIdCode(code);
+				log('XXX got code', code);
+			}
 		});
 		super.init();
 	}
