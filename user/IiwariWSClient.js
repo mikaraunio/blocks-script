@@ -44,9 +44,11 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         IiwariWSClient.prototype.sendHeartbeat = function () {
             var _this = this;
             if (!this.connection) {
+                console.log('Connection undefined in heartbeat sender');
                 return;
             }
             this.connection.sendText('');
+            console.log('Sent heartbeat');
             if (this.heartbeatAwaiter) {
                 this.heartbeatAwaiter.cancel();
             }

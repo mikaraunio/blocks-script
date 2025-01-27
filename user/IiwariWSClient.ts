@@ -36,10 +36,12 @@ export class IiwariWSClient extends Script {
 
   private sendHeartbeat() {
     if (!this.connection) {
+      console.log('Connection undefined in heartbeat sender')
       return;
     }
 
     this.connection.sendText('');
+    console.log('Sent heartbeat')
     if (this.heartbeatAwaiter) {
       this.heartbeatAwaiter.cancel();
     }
