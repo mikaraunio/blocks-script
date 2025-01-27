@@ -86,6 +86,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         function VisitorTracking(env) {
             var _this = _super.call(this, env) || this;
             _this.addStation(new Reception("1_Regi", _this));
+            _this.listenForVisitors();
             return _this;
         }
         VisitorTracking.prototype.deleteAllVisitors = function (archive) {

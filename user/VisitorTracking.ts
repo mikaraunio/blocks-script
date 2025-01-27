@@ -51,6 +51,8 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 		this.addStation(new Reception("1_Regi", this));
 		// this.addStation(new GoodByeStation("VisitorTracking.ScreenRight",this));
 		// this.addStation(new InfoStation("VisitorTracking.ScreenLeft",this));
+
+		this.listenForVisitors();
 	}
 
 	/**
