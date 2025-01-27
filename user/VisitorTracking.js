@@ -76,6 +76,10 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             (0, Metadata_1.field)(),
             __metadata("design:type", Number)
         ], QRCodeAndPhoneData.prototype, "totalScore", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", String)
+        ], QRCodeAndPhoneData.prototype, "location", void 0);
         QRCodeAndPhoneData = __decorate([
             (0, Metadata_1.record)("Data we track for each visitor")
         ], QRCodeAndPhoneData);
@@ -114,6 +118,10 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
                 console.log(kMobileSpot, "is not a MobileSpot");
         };
         VisitorTracking.prototype.gotVisitorConnection = function (visitor) {
+            log(visitor);
+            log(visitor.identity);
+            log(visitor.record);
+            return;
             if (visitor.record.whenJoined)
                 console.log("Visitor phone re-connected, ID", visitor.identity);
             else {
@@ -121,6 +129,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
                 console.log("New visitor phone connected, ID", visitor.identity);
             }
             visitor.subscribe('location', function (sender, message) {
+                visitor.record.location = message.location;
                 console.log("Visitor ID", visitor.identity, "now at location", message.location);
             });
         };

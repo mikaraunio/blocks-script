@@ -36,6 +36,7 @@ class QRCodeAndPhoneData extends RecordBase implements VisitorRecordBase {
 	@field() quizScore: number;		// Score frmo Quiz game (except how tall speaker is)
 	@field() speakerTall: number;	// How tall the speaker is
 	@field() totalScore: number;	// Final score total
+	@field() location: string;	  // Most recenly reported location (from Locator block)
 }
 
 /*	My main class, implementing this user script. I inherit most functionality from my
@@ -110,6 +111,10 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 	 * associated with each visitor.
 	 */
 	private gotVisitorConnection(visitor: Visitor<QRCodeAndPhoneData>) {
+    log(visitor);
+    log(visitor.identity);
+    log(visitor.record);
+    return;
 		if (visitor.record.whenJoined)	// Not a new visitor if whenJoined already set
 			console.log("Visitor phone re-connected, ID", visitor.identity);
 		else {
@@ -118,6 +123,7 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 		}
 
 		visitor.subscribe('location', (sender, message) => {
+			visitor.record.location = message.location;
 			console.log("Visitor ID", visitor.identity, "now at location", message.location);
 		});
 	}
