@@ -17,9 +17,9 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IiwariWSClient = void 0;
-    var reconnDelayMs = 2500;
-    var address = 'ws://192.168.2.245:8123/';
-    var headers = {
+    var RECONN_DELAY_MS = 2500;
+    var URL = 'ws://192.168.2.245:8123/';
+    var HEADERS = {
         'Authorization': 'Bearer c7IIiWxOXC6jWwSPDvSWDKf5lfEUcsR79djeK5T3ScRKOMWFy4hVhU5N3l5PaOsi7VsUeXF3i7o8yfcTaB',
     };
     var IiwariWSClient = (function (_super) {
@@ -32,12 +32,13 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         }
         IiwariWSClient.prototype.connect = function () {
             var _this = this;
-            SimpleWebsocket_1.SimpleWebsocket.connect(address, 8192, headers).then(function (connection) {
+            SimpleWebsocket_1.SimpleWebsocket.connect(URL, 8192, HEADERS).then(function (connection) {
+                _this.connection = connection;
                 console.log('Iiwari WS connected');
                 connection.subscribe('textReceived', _this.handleMessage);
                 connection.subscribe('finish', function (sender) {
-                    console.log('Iiwari WS disconnected, reconnecting in ' + reconnDelayMs + ' ms');
-                    var reconnectAwaiter = wait(reconnDelayMs);
+                    console.log('Iiwari WS disconnected, reconnecting in ' + RECONN_DELAY_MS + ' ms');
+                    var reconnectAwaiter = wait(RECONN_DELAY_MS);
                     reconnectAwaiter.then(function () { return _this.connect(); });
                 });
             });
