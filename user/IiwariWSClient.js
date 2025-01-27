@@ -18,6 +18,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IiwariWSClient = void 0;
     var RECONN_DELAY_MS = 2500;
+    var HEARTBEAT_INTERVAL_MS = 5000;
     var URL = 'ws://192.168.2.245:8123/';
     var HEADERS = {
         'Authorization': 'Bearer c7IIiWxOXC6jWwSPDvSWDKf5lfEUcsR79djeK5T3ScRKOMWFy4hVhU5N3l5PaOsi7VsUeXF3i7o8yfcTaB',
@@ -36,12 +37,34 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
                 _this.connection = connection;
                 console.log('Iiwari WS connected');
                 connection.subscribe('textReceived', _this.handleMessage);
-                connection.subscribe('finish', function (sender) {
-                    console.log('Iiwari WS disconnected, reconnecting in ' + RECONN_DELAY_MS + ' ms');
-                    var reconnectAwaiter = wait(RECONN_DELAY_MS);
-                    reconnectAwaiter.then(function () { return _this.connect(); });
-                });
+                connection.subscribe('finish', _this.handleFinish);
+                _this.sendHeartbeat();
             });
+        };
+        IiwariWSClient.prototype.sendHeartbeat = function () {
+            var _this = this;
+            if (!this.connection) {
+                return;
+            }
+            this.connection.sendText('');
+            if (this.heartbeatAwaiter) {
+                this.heartbeatAwaiter.cancel();
+            }
+            this.heartbeatAwaiter = wait(HEARTBEAT_INTERVAL_MS);
+            this.heartbeatAwaiter.then(function () { return _this.sendHeartbeat(); });
+        };
+        IiwariWSClient.prototype.handleFinish = function (sender) {
+            var _this = this;
+            console.log('Iiwari WS disconnected, reconnecting in ' + RECONN_DELAY_MS + ' ms');
+            if (this.heartbeatAwaiter) {
+                this.heartbeatAwaiter.cancel();
+                this.heartbeatAwaiter = undefined;
+            }
+            if (this.reconnectAwaiter) {
+                this.reconnectAwaiter.cancel();
+            }
+            this.reconnectAwaiter = wait(RECONN_DELAY_MS);
+            this.reconnectAwaiter.then(function () { return _this.connect(); });
         };
         IiwariWSClient.prototype.handleMessage = function (sender, message) {
             console.log(message.text);
