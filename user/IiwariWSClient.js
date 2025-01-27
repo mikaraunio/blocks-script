@@ -19,6 +19,9 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
     exports.IiwariWSClient = void 0;
     var reconnDelayMs = 2500;
     var address = 'ws://192.168.2.245:8123/';
+    var headers = {
+        'Authorization': 'Bearer c7IIiWxOXC6jWwSPDvSWDKf5lfEUcsR79djeK5T3ScRKOMWFy4hVhU5N3l5PaOsi7VsUeXF3i7o8yfcTaB',
+    };
     var IiwariWSClient = (function (_super) {
         __extends(IiwariWSClient, _super);
         function IiwariWSClient(env) {
@@ -29,22 +32,18 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         }
         IiwariWSClient.prototype.connect = function () {
             var _this = this;
-            SimpleWebsocket_1.SimpleWebsocket.connect(address, 8192, {
-                'Authorization': 'Bearer c7IIiWxOXC6jWwSPDvSWDKf5lfEUcsR79djeK5T3ScRKOMWFy4hVhU5N3l5PaOsi7VsUeXF3i7o8yfcTaB',
-            }).then(function (connection) {
+            SimpleWebsocket_1.SimpleWebsocket.connect(address, 8192, headers).then(function (connection) {
                 console.log('Iiwari WS connected');
                 connection.subscribe('textReceived', _this.handleMessage);
-                connection.subscribe('finish', _this.reconnect);
+                connection.subscribe('finish', function (sender) {
+                    console.log('Iiwari WS disconnected, reconnecting in ' + reconnDelayMs + ' ms');
+                    var reconnectAwaiter = wait(reconnDelayMs);
+                    reconnectAwaiter.then(function () { return _this.connect(); });
+                });
             });
         };
         IiwariWSClient.prototype.handleMessage = function (sender, message) {
             console.log(message.text);
-        };
-        IiwariWSClient.prototype.reconnect = function (sender) {
-            var _this = this;
-            console.log('Iiwari WS disconnected, reconnecting in ' + reconnDelayMs + ' ms');
-            var reconnectAwaiter = wait(reconnDelayMs);
-            reconnectAwaiter.then(function () { return _this.connect(); });
         };
         return IiwariWSClient;
     }(Script_1.Script));
