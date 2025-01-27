@@ -17,6 +17,8 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IiwariWSClient = void 0;
+    var reconnDelayMs = 500;
+    var address = 'ws://192.168.2.245:8123/';
     var IiwariWSClient = (function (_super) {
         __extends(IiwariWSClient, _super);
         function IiwariWSClient(env) {
@@ -27,10 +29,12 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         }
         IiwariWSClient.prototype.connect = function () {
             var _this = this;
-            SimpleWebsocket_1.SimpleWebsocket.connect('ws://192.168.2.245/').then(function (connection) {
+            SimpleWebsocket_1.SimpleWebsocket.connect(address).then(function (connection) {
+                console.log('Iiwari WS connected');
                 connection.subscribe('textReceived', _this.handleMessage);
                 connection.subscribe('finish', function (sender) {
-                    var reconnectAwaiter = wait(500);
+                    console.log('Iiwari WS disconnected, reconnecting in ' + reconnDelayMs + ' ms');
+                    var reconnectAwaiter = wait(reconnDelayMs);
                     reconnectAwaiter.then(function () { return _this.connect(); });
                 });
             });

@@ -2,6 +2,8 @@ import {Script, ScriptEnv} from "system_lib/Script";
 import {property, resource} from "system_lib/Metadata";
 import { SimpleWebsocket, WebsocketConnection, TextMessage } from "system/SimpleWebsocket";
 
+const reconnDelayMs = 500;
+const address = 'ws://192.168.2.245:8123/'
 
 export class IiwariWSClient extends Script {
 	private mLastMessage = "";	// Backing store for lastMessage property
@@ -13,10 +15,12 @@ export class IiwariWSClient extends Script {
 	}
 
 	private connect() {
-		SimpleWebsocket.connect('ws://192.168.2.245/').then((connection: WebsocketConnection) => {
+		SimpleWebsocket.connect(address).then((connection: WebsocketConnection) => {
+			console.log('Iiwari WS connected')
 			connection.subscribe('textReceived', this.handleMessage);
 			connection.subscribe('finish', (sender) => {
-				let reconnectAwaiter = wait(500);
+				console.log('Iiwari WS disconnected, reconnecting in ' + reconnDelayMs + ' ms')
+				const reconnectAwaiter = wait(reconnDelayMs);
 				reconnectAwaiter.then(() => this.connect());
 			})
 		})
