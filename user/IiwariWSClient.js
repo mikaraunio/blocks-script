@@ -29,7 +29,9 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         }
         IiwariWSClient.prototype.connect = function () {
             var _this = this;
-            SimpleWebsocket_1.SimpleWebsocket.connect(address).then(function (connection) {
+            SimpleWebsocket_1.SimpleWebsocket.connect(address, 8192, {
+                'Authorization': 'Bearer c7IIiWxOXC6jWwSPDvSWDKf5lfEUcsR79djeK5T3ScRKOMWFy4hVhU5N3l5PaOsi7VsUeXF3i7o8yfcTaB',
+            }).then(function (connection) {
                 console.log('Iiwari WS connected');
                 connection.subscribe('textReceived', _this.handleMessage);
                 connection.subscribe('finish', _this.reconnect);
@@ -40,8 +42,6 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         };
         IiwariWSClient.prototype.reconnect = function (sender) {
             var _this = this;
-            sender.unsubscribe('textReceived', this.handleMessage);
-            sender.unsubscribe('finish', this.reconnect);
             console.log('Iiwari WS disconnected, reconnecting in ' + reconnDelayMs + ' ms');
             var reconnectAwaiter = wait(reconnDelayMs);
             reconnectAwaiter.then(function () { return _this.connect(); });
