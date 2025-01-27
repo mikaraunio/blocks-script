@@ -2,7 +2,7 @@ import {Script, ScriptEnv} from "system_lib/Script";
 import {property, resource} from "system_lib/Metadata";
 import { SimpleWebsocket, WebsocketConnection, TextMessage } from "system/SimpleWebsocket";
 
-const reconnDelayMs = 500;
+const reconnDelayMs = 2500;
 const address = 'ws://192.168.2.245:8123/'
 
 export class IiwariWSClient extends Script {
@@ -18,15 +18,19 @@ export class IiwariWSClient extends Script {
 		SimpleWebsocket.connect(address).then((connection: WebsocketConnection) => {
 			console.log('Iiwari WS connected')
 			connection.subscribe('textReceived', this.handleMessage);
-			connection.subscribe('finish', (sender) => {
-				console.log('Iiwari WS disconnected, reconnecting in ' + reconnDelayMs + ' ms')
-				const reconnectAwaiter = wait(reconnDelayMs);
-				reconnectAwaiter.then(() => this.connect());
-			})
+			connection.subscribe('finish', this.reconnect)
 		})
 	}
 
 	private handleMessage(sender: WebsocketConnection, message: TextMessage) {
 		console.log(message.text);
+	}
+
+	private reconnect(sender: WebsocketConnection) {
+		sender.unsubscribe('textReceived', this.handleMessage);
+		sender.unsubscribe('finish', this.reconnect);
+		console.log('Iiwari WS disconnected, reconnecting in ' + reconnDelayMs + ' ms')
+		const reconnectAwaiter = wait(reconnDelayMs);
+		reconnectAwaiter.then(() => this.connect());
 	}
 }
