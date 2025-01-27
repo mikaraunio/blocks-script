@@ -13,7 +13,7 @@
 	All Rights Reserved.
  */
 
-import {DisplaySpot, Spot} from "system/Spot";
+import {MobileSpot, DisplaySpot, Spot, Visitor} from "system/Spot";
 import {ScriptEnv, PropertyAccessor} from "system_lib/Script";
 import {RecordBase} from "../system_lib/ScriptBase";
 import {record, field, id, callable, parameter} from "system_lib/Metadata";
@@ -21,6 +21,7 @@ import {StationBase, VisitorRecordBase, VisitorScriptBase} from "../lib/VisitorD
 
 // Constants you may want to change:
 const DEBUG = true;	// Set to false to disable verbose logging
+const kMobileSpot = "Visitor";
 
 
 @record("Data we track for each visitor")
@@ -78,6 +79,45 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 			station.simulateRfid(rfidCode);
 		else
 			throw "No such station/spot path"
+	}
+
+	private listenForVisitors() {
+		const mobile = Spot[kMobileSpot] as MobileSpot;	// Get designated Spot
+
+		// Ensure we indeed got a Spot of the expected type
+		if (mobile && mobile.isOfTypeName('MobileSpot')) {
+
+			// Listen for connecting visitors
+			mobile.subscribe<QRCodeAndPhoneData>('visitor', (sender, message) => {
+				if (message.type === 'Connected')
+					this.gotVisitorConnection(message.visitor);
+			});
+
+			// Listen for my MobileSpot going away, then attempt to re-attach
+			mobile.subscribe('finish', sender => this.listenForVisitors());
+		} else
+			console.log(kMobileSpot, "is not a MobileSpot");
+	}
+
+	/**
+	 * A visitor connected to me. Listen for interesting messages from that visitor. Here
+	 * were only listening for the visitor's location to change, updating the current
+	 * location in our data accordingly. We're not actually using this for anything here,
+	 * but this can still be useful to analyze where visitors go, how long they stay before going
+	 * somewhere else, etc, since all such data is also logged into the data log (CSV file)
+	 * associated with each visitor.
+	 */
+	private gotVisitorConnection(visitor: Visitor<QRCodeAndPhoneData>) {
+		if (visitor.record.whenJoined)	// Not a new visitor if whenJoined already set
+			console.log("Visitor phone re-connected, ID", visitor.identity);
+		else {
+			visitor.record.whenJoined = Date.now();
+			console.log("New visitor phone connected, ID", visitor.identity);
+		}
+
+		visitor.subscribe('location', (sender, message) => {
+			console.log("Visitor ID", visitor.identity, "now at location", message.location);
+		});
 	}
 }
 

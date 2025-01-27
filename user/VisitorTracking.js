@@ -30,6 +30,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.VisitorTracking = void 0;
     var DEBUG = true;
+    var kMobileSpot = "Visitor";
     var QRCodeAndPhoneData = (function (_super) {
         __extends(QRCodeAndPhoneData, _super);
         function QRCodeAndPhoneData() {
@@ -97,6 +98,30 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
                 station.simulateRfid(rfidCode);
             else
                 throw "No such station/spot path";
+        };
+        VisitorTracking.prototype.listenForVisitors = function () {
+            var _this = this;
+            var mobile = Spot_1.Spot[kMobileSpot];
+            if (mobile && mobile.isOfTypeName('MobileSpot')) {
+                mobile.subscribe('visitor', function (sender, message) {
+                    if (message.type === 'Connected')
+                        _this.gotVisitorConnection(message.visitor);
+                });
+                mobile.subscribe('finish', function (sender) { return _this.listenForVisitors(); });
+            }
+            else
+                console.log(kMobileSpot, "is not a MobileSpot");
+        };
+        VisitorTracking.prototype.gotVisitorConnection = function (visitor) {
+            if (visitor.record.whenJoined)
+                console.log("Visitor phone re-connected, ID", visitor.identity);
+            else {
+                visitor.record.whenJoined = Date.now();
+                console.log("New visitor phone connected, ID", visitor.identity);
+            }
+            visitor.subscribe('location', function (sender, message) {
+                console.log("Visitor ID", visitor.identity, "now at location", message.location);
+            });
         };
         __decorate([
             (0, Metadata_1.callable)("Discard all visitors of the last day. Call nightly."),
