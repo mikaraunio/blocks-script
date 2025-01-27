@@ -27,6 +27,6 @@ export class IiwariWSClient extends Script {
 	}
 
 	private handleMessage(sender: WebsocketConnection, message: TextMessage) {
-		console.log(message);
+		console.log(message.text);
 	}
 }

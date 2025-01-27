@@ -40,7 +40,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             });
         };
         IiwariWSClient.prototype.handleMessage = function (sender, message) {
-            console.log(message);
+            console.log(message.text);
         };
         return IiwariWSClient;
     }(Script_1.Script));
