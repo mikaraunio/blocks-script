@@ -70,6 +70,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             }
             if (this.receiveTimeoutAwaiter) {
                 this.receiveTimeoutAwaiter.cancel();
+                console.log('cancelled receiveTimeoutAwaiter');
             }
             this.receiveTimeoutAwaiter = wait(RECEIVE_TIMEOUT_MS);
             this.receiveTimeoutAwaiter.then(function () {
@@ -81,7 +82,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
                 _this.connection.disconnect();
                 _this.connection = undefined;
                 _this.reconnect();
-            });
+            }).catch(function (error) { return console.log('XXXXXXX', error); });
         };
         IiwariWSClient.prototype.sendHeartbeat = function () {
             var _this = this;

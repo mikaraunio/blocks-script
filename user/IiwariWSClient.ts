@@ -62,6 +62,7 @@ export class IiwariWSClient extends Script {
 
 		if (this.receiveTimeoutAwaiter) {
 			this.receiveTimeoutAwaiter.cancel();
+			console.log('cancelled receiveTimeoutAwaiter')
 		}
 		this.receiveTimeoutAwaiter = wait(RECEIVE_TIMEOUT_MS);
 		this.receiveTimeoutAwaiter.then(() => {
@@ -73,7 +74,7 @@ export class IiwariWSClient extends Script {
 			this.connection.disconnect();
 			this.connection = undefined;
 			this.reconnect();
-		});
+		}).catch((error) => console.log('XXXXXXX', error));
 
 	}
 
