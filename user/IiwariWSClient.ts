@@ -19,6 +19,7 @@ export class IiwariWSClient extends Script {
 
 	public constructor(env: ScriptEnv) {
 		super(env);
+		console.log('Iiwari WS: Started')
 		this.connect();
 	}
 
@@ -30,8 +31,16 @@ export class IiwariWSClient extends Script {
 		).then((connection: WebsocketConnection) => {
 			this.connection = connection;
 			console.log('Iiwari WS: Connected')
-			connection.subscribe('textReceived', (sender: WebsocketConnection, message: TextMessage) => this.handleMessage(sender, message));
-			connection.subscribe('finish', (sender) => this.handleFinish(sender));
+			try {
+				connection.subscribe('textReceived', (sender: WebsocketConnection, message: TextMessage) => this.handleMessage(sender, message));
+			} catch {
+				console.log('Iiwari WS: Exception occurred in subscribe("textReceived", ignoring.')
+			}
+			try {
+				connection.subscribe('finish', (sender) => this.handleFinish(sender));
+			} catch {
+				console.log('Iiwari WS: Exception occurred in subscribe("finish", ignoring.')
+			}
 			this.sendHeartbeat();
 			this.waitForReceiveTimeout();
 		}).catch((error) => {

@@ -30,6 +30,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             var _this = _super.call(this, env) || this;
             _this.mLastMessage = "";
             _this.connection = undefined;
+            console.log('Iiwari WS: Started');
             _this.connect();
             return _this;
         }
@@ -38,8 +39,18 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             SimpleWebsocket_1.SimpleWebsocket.connect(URL, 8192, HEADERS).then(function (connection) {
                 _this.connection = connection;
                 console.log('Iiwari WS: Connected');
-                connection.subscribe('textReceived', function (sender, message) { return _this.handleMessage(sender, message); });
-                connection.subscribe('finish', function (sender) { return _this.handleFinish(sender); });
+                try {
+                    connection.subscribe('textReceived', function (sender, message) { return _this.handleMessage(sender, message); });
+                }
+                catch (_a) {
+                    console.log('Iiwari WS: Exception occurred in subscribe("textReceived", ignoring.');
+                }
+                try {
+                    connection.subscribe('finish', function (sender) { return _this.handleFinish(sender); });
+                }
+                catch (_b) {
+                    console.log('Iiwari WS: Exception occurred in subscribe("finish", ignoring.');
+                }
                 _this.sendHeartbeat();
                 _this.waitForReceiveTimeout();
             }).catch(function (error) {
