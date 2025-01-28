@@ -60,13 +60,13 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             if (this.receiveTimeoutAwaiter) {
                 this.receiveTimeoutAwaiter.cancel();
             }
-            this.receiveTimeoutAwaiter = wait(HEARTBEAT_INTERVAL_MS);
+            this.receiveTimeoutAwaiter = wait(RECEIVE_TIMEOUT_MS);
             this.heartbeatAwaiter.then(function () {
                 if (!_this.connection) {
                     console.log('Iivari WS: Connection already closed when entering receive timeout handler.');
                     return;
                 }
-                console.log('Iivari WS: No messages received in ' + HEARTBEAT_INTERVAL_MS + ' ms, disconnecting.');
+                console.log('Iivari WS: No messages received in ' + RECEIVE_TIMEOUT_MS + ' ms, disconnecting.');
                 _this.connection.disconnect();
                 _this.connection = undefined;
                 _this.reconnect();
