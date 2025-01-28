@@ -11,11 +11,12 @@ const HEADERS = {
 }
 
 export class IiwariWSClient extends Script {
-	private mLastMessage = "";
-	private reconnectAwaiter: CancelablePromise<void>;
-	private heartbeatAwaiter: CancelablePromise<void>;
-	private receiveTimeoutAwaiter: CancelablePromise<void>;
+	private mLastMessage: string = "";
+	private reconnectAwaiter: CancelablePromise<void> | undefined = undefined;
+	private heartbeatAwaiter: CancelablePromise<void> | undefined = undefined;
+	private receiveTimeoutAwaiter: CancelablePromise<void> | undefined = undefined;
 	private connection: WebsocketConnection | undefined = undefined;
+	private lastReceivedTimestamp: number | undefined = undefined;
 
 	public constructor(env: ScriptEnv) {
 		super(env);
@@ -31,16 +32,9 @@ export class IiwariWSClient extends Script {
 		).then((connection: WebsocketConnection) => {
 			this.connection = connection;
 			console.log('Iiwari WS: Connected')
-			try {
-				connection.subscribe('textReceived', (sender: WebsocketConnection, message: TextMessage) => this.handleMessage(sender, message));
-			} catch {
-				console.log('Iiwari WS: Exception occurred in subscribe("textReceived"), ignoring.')
-			}
-			try {
-				connection.subscribe('finish', (sender) => this.handleFinish(sender));
-			} catch {
-				console.log('Iiwari WS: Exception occurred in subscribe("finish"), ignoring.')
-			}
+			connection.subscribe('textReceived', (sender: WebsocketConnection, message: TextMessage) => this.handleMessage(sender, message));
+			connection.subscribe('finish', (sender) => this.handleFinish(sender));
+			this.lastReceivedTimestamp = Date.now();
 			this.sendHeartbeat();
 			this.waitForReceiveTimeout();
 		}).catch((error) => {
@@ -55,26 +49,21 @@ export class IiwariWSClient extends Script {
 			return;
 		}
 
-		if (!this.connection) {
-			console.log('Iivari WS: Skipping receive timeout, not connected')
-			return;
-		}
-
-		if (this.receiveTimeoutAwaiter) {
-			this.receiveTimeoutAwaiter.cancel();
-			console.log('cancelled receiveTimeoutAwaiter')
-		}
 		this.receiveTimeoutAwaiter = wait(RECEIVE_TIMEOUT_MS);
 		this.receiveTimeoutAwaiter.then(() => {
 			if (!this.connection) {
 				console.log('Iivari WS: Connection already closed when entering receive timeout handler')
 				return;
 			}
-			console.log('Iivari WS: Receive timeout, no messages received in ' + RECEIVE_TIMEOUT_MS + ' ms, disconnecting')
-			this.connection.disconnect();
-			this.connection = undefined;
-			this.reconnect();
-		}).catch((error) => console.log('XXXXXXX', error));
+			if (this.lastReceivedTimestamp  && (Date.now() - this.lastReceivedTimestamp) > RECEIVE_TIMEOUT_MS) {
+				console.log('Iivari WS: Receive timeout, no messages received in ' + RECEIVE_TIMEOUT_MS + ' ms, disconnecting')
+				this.connection.disconnect();
+				this.connection = undefined;
+				this.reconnect();
+			} else {
+				this.waitForReceiveTimeout();
+			}
+		});
 
 	}
 
@@ -121,7 +110,7 @@ export class IiwariWSClient extends Script {
 	}
 
 	private handleMessage(sender: WebsocketConnection, message: TextMessage) {
+		this.lastReceivedTimestamp = Date.now();
 		console.log(message.text);
-		this.waitForReceiveTimeout();
 	}
 }

@@ -29,7 +29,11 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         function IiwariWSClient(env) {
             var _this = _super.call(this, env) || this;
             _this.mLastMessage = "";
+            _this.reconnectAwaiter = undefined;
+            _this.heartbeatAwaiter = undefined;
+            _this.receiveTimeoutAwaiter = undefined;
             _this.connection = undefined;
+            _this.lastReceivedTimestamp = undefined;
             console.log('Iiwari WS: Started');
             _this.connect();
             return _this;
@@ -39,18 +43,9 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             SimpleWebsocket_1.SimpleWebsocket.connect(URL, 8192, HEADERS).then(function (connection) {
                 _this.connection = connection;
                 console.log('Iiwari WS: Connected');
-                try {
-                    connection.subscribe('textReceived', function (sender, message) { return _this.handleMessage(sender, message); });
-                }
-                catch (_a) {
-                    console.log('Iiwari WS: Exception occurred in subscribe("textReceived"), ignoring.');
-                }
-                try {
-                    connection.subscribe('finish', function (sender) { return _this.handleFinish(sender); });
-                }
-                catch (_b) {
-                    console.log('Iiwari WS: Exception occurred in subscribe("finish"), ignoring.');
-                }
+                connection.subscribe('textReceived', function (sender, message) { return _this.handleMessage(sender, message); });
+                connection.subscribe('finish', function (sender) { return _this.handleFinish(sender); });
+                _this.lastReceivedTimestamp = Date.now();
                 _this.sendHeartbeat();
                 _this.waitForReceiveTimeout();
             }).catch(function (error) {
@@ -64,25 +59,22 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
                 console.log('Iivari WS: Receive timeouts disabled');
                 return;
             }
-            if (!this.connection) {
-                console.log('Iivari WS: Skipping receive timeout, not connected');
-                return;
-            }
-            if (this.receiveTimeoutAwaiter) {
-                this.receiveTimeoutAwaiter.cancel();
-                console.log('cancelled receiveTimeoutAwaiter');
-            }
             this.receiveTimeoutAwaiter = wait(RECEIVE_TIMEOUT_MS);
             this.receiveTimeoutAwaiter.then(function () {
                 if (!_this.connection) {
                     console.log('Iivari WS: Connection already closed when entering receive timeout handler');
                     return;
                 }
-                console.log('Iivari WS: Receive timeout, no messages received in ' + RECEIVE_TIMEOUT_MS + ' ms, disconnecting');
-                _this.connection.disconnect();
-                _this.connection = undefined;
-                _this.reconnect();
-            }).catch(function (error) { return console.log('XXXXXXX', error); });
+                if (_this.lastReceivedTimestamp && (Date.now() - _this.lastReceivedTimestamp) > RECEIVE_TIMEOUT_MS) {
+                    console.log('Iivari WS: Receive timeout, no messages received in ' + RECEIVE_TIMEOUT_MS + ' ms, disconnecting');
+                    _this.connection.disconnect();
+                    _this.connection = undefined;
+                    _this.reconnect();
+                }
+                else {
+                    _this.waitForReceiveTimeout();
+                }
+            });
         };
         IiwariWSClient.prototype.sendHeartbeat = function () {
             var _this = this;
@@ -124,8 +116,8 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             this.reconnectAwaiter.then(function () { return _this.connect(); });
         };
         IiwariWSClient.prototype.handleMessage = function (sender, message) {
+            this.lastReceivedTimestamp = Date.now();
             console.log(message.text);
-            this.waitForReceiveTimeout();
         };
         return IiwariWSClient;
     }(Script_1.Script));
