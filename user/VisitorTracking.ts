@@ -224,7 +224,7 @@ class Reception extends Station {
 			updatedEmail => this.getCurrVisitor().email = updatedEmail
 		);
 		this.colorProp = this.getSpotParameterAccessor<string>(
-			"olor",
+			"color",
 			updatedColor => this.getCurrVisitor().color = updatedColor
 		);
 		/*	Hook up the common 'message' Spot parameter, often used to show a
@@ -266,6 +266,7 @@ class Reception extends Station {
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
 		this.nameProp.value = visitorData.name;
 		this.emailProp.value = visitorData.email;
+		this.colorProp.value = visitorData.color;
 		return true;
 	}
 
