@@ -62,6 +62,10 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         __decorate([
             (0, Metadata_1.field)(),
             __metadata("design:type", String)
+        ], QRCodeAndPhoneData.prototype, "badgeName", void 0);
+        __decorate([
+            (0, Metadata_1.field)(),
+            __metadata("design:type", String)
         ], QRCodeAndPhoneData.prototype, "currentStation", void 0);
         __decorate([
             (0, Metadata_1.field)(),
@@ -88,8 +92,6 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             log("VisitorPhone id and record", visitor.identity, visitor.record ? visitor.record.$puid : 'no data');
             this.record = visitor.record;
             this.rfidProperty = owner.getProperty('Spot.' + kMobileSpot + '.' + visitor.identity + '.parameter.rfid', function (rfid) { return _this.visitorRfidCode(rfid); });
-            log('Spot.' + kMobileSpot + '.' + visitor.identity + '.parameter.rfid');
-            log(this.rfidProperty);
             visitor.subscribe('finish', function () { return _this.visitorGone(); });
         }
         VisitorPhone.prototype.visitorRfidCode = function (rfid) {
@@ -123,10 +125,10 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             _super.prototype.deleteRecords.call(this, QRCodeAndPhoneData, archive);
             log("Deleted All");
         };
-        VisitorTracking.prototype.simulateRfid = function (spotPath, rfidCode) {
+        VisitorTracking.prototype.simulateRfid = function (spotPath, rfidCode, processIiwari) {
             var station = this.getStationForSpotPath(spotPath);
             if (station)
-                station.simulateRfid(rfidCode);
+                station.simulateRfid(rfidCode, processIiwari);
             else
                 throw "No such station/spot path";
         };
@@ -157,8 +159,9 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             (0, Metadata_1.callable)("Spoon-feed an RFID code as being scanned at a Spot"),
             __param(0, (0, Metadata_1.parameter)("Spot path, e.g. 'TwoScreens.Left'")),
             __param(1, (0, Metadata_1.parameter)("Code being scanned at Spot")),
+            __param(2, (0, Metadata_1.parameter)("Parse as Iiwari badge QR?", true)),
             __metadata("design:type", Function),
-            __metadata("design:paramtypes", [String, String]),
+            __metadata("design:paramtypes", [String, String, Boolean]),
             __metadata("design:returntype", void 0)
         ], VisitorTracking.prototype, "simulateRfid", null);
         return VisitorTracking;
@@ -170,20 +173,13 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             return _super !== null && _super.apply(this, arguments) || this;
         }
         Station.prototype.init = function () {
-            var _this = this;
-            this.getSpotPropertyAccessor("scannerInput", function (code) {
-                if (code) {
-                    _this.gotIdCode(code);
-                    log('XXX got code', code);
-                }
-            });
             _super.prototype.init.call(this);
         };
         Station.prototype.recordFromRfidCode = function (rfidCode) {
             return this.owner.getRecordSec(QRCodeAndPhoneData, 'idCode', rfidCode);
         };
-        Station.prototype.simulateRfid = function (code) {
-            this.gotIdCode(code);
+        Station.prototype.simulateRfid = function (code, processIiwari) {
+            this.gotIdCode(code, processIiwari);
         };
         return Station;
     }(VisitorData_1.StationBase));
@@ -200,7 +196,18 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             this.messageProp = this.getSpotParameterAccessor("message");
             _super.prototype.init.call(this);
         };
-        Reception.prototype.gotIdCode = function (idCode) {
+        Reception.prototype.gotIdCode = function (idCode, processIiwari) {
+            var _a;
+            var badgeName = undefined;
+            if (processIiwari) {
+                try {
+                    _a = idCode.split(':'), badgeName = _a[0], idCode = _a[1];
+                }
+                catch (_b) {
+                    log('Could not parse Iiwari QR code');
+                    return;
+                }
+            }
             var record = this.recordFromRfidCode(idCode);
             if (record) {
                 log("Reception returning visitor", record.name, record.$puid);
@@ -211,6 +218,9 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
                 log("Reception new visitor ID", idCode, record.$puid);
                 record.whenJoined = Date.now();
                 record.idCode = idCode;
+                if (badgeName) {
+                    record.badgeName = badgeName;
+                }
                 this.messageProp.value = "Welcome!";
             }
             this.gotVisitor(record);

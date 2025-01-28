@@ -1,15 +1,4 @@
-/*	Demo of the Visitor Tracking feature introduced in Blocks 6. This is a rather basic
-	demo, as implied by its name. It uses only ID tags (RFID, NFC) for identification.
-
-	It introduces some of the useful base classes, such as VisitorScriptBase and
-	StationBase, that help implement common functionality often called for, such
-	as keeping track of who's where, and notifying stations as visitors arrive and
-	leave.
-
-	I also use the IndexedPropertyPersistor library class to persist the list of
-	high scores to disk, reloading that data on server restart.
-
-	Copyright (c) PIXILAB Technologies AB, Sweden (http://pixilab.se).
+/*  Copyright (c) PIXILAB Technologies AB, Sweden (http://pixilab.se).
 	All Rights Reserved.
  */
 
@@ -30,7 +19,8 @@ class QRCodeAndPhoneData extends RecordBase implements VisitorRecordBase {
 	@field() @spotParameter() name: string;			// Name provided by visitor
 	@field() @spotParameter() color: string;			// Favorite color provided by visitor
 	@field() @spotParameter() email: string;			// Email address provided by visitor
-	@field() currentStation: string; // Curently (or last) visited station
+	@field() badgeName: string; // Iiwari physical badge identifier
+	@field() currentStation: string; // Currently (or last) visited station
 	@field() whenJoined: number;	// UNIX timestamp when first connected
 	@field() briefed: boolean;		// The visitor has been briefed at the info station
 	@field() location: string;	  // Most recenly reported location (from Locator block)
@@ -52,8 +42,6 @@ class VisitorPhone {
 			'Spot.' + kMobileSpot + '.' + visitor.identity + '.parameter.rfid',
 			rfid => this.visitorRfidCode(rfid)
 		);
-		log('Spot.' + kMobileSpot + '.' + visitor.identity + '.parameter.rfid');
-		log(this.rfidProperty);
 
 		// Listen for this visitor's phone disconnecting
 		visitor.subscribe('finish', () => this.visitorGone());
@@ -76,24 +64,16 @@ class VisitorPhone {
 		}
 	}
 
-	/** Visitor disconnected - do what's appropriate here.
-	*/
 	private visitorGone() {
 		log("VisitorPhone disconnected");
 		this.rfidProperty.close(); // Do not leak prop accessors for each reconnection
 	}
 }
 
-/*	My main class, implementing this user script. I inherit most functionality from my
-	VisitorScriptBase class, with parameters defining my type of data (QRCodeAndPhoneData)
-	as well as the type of my Stations (defined elsewhere in this file). Since I don't
-	use visitors' phones at all, I omit the last parameter to VisitorScriptBase.
- */
 export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneData> {
 	constructor(env : ScriptEnv) {
 		super(env);
 
-		// Establish the "stations" (here only display spots) being used
 		this.addStation(new Reception("1_Regi", this));
 		// this.addStation(new GoodByeStation("VisitorTracking.ScreenRight",this));
 		// this.addStation(new InfoStation("VisitorTracking.ScreenLeft",this));
@@ -120,11 +100,12 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 	@callable("Spoon-feed an RFID code as being scanned at a Spot")
 	simulateRfid(
 		@parameter("Spot path, e.g. 'TwoScreens.Left'") spotPath: string,
-		@parameter("Code being scanned at Spot") rfidCode: string
+		@parameter("Code being scanned at Spot") rfidCode: string,
+		@parameter("Parse as Iiwari badge QR?", true) processIiwari?: boolean
 	) {
 		const station = this.getStationForSpotPath(spotPath);
 		if (station)
-			station.simulateRfid(rfidCode);
+			station.simulateRfid(rfidCode, processIiwari);
 		else
 			throw "No such station/spot path"
 	}
@@ -168,13 +149,6 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
 	 * and before any other active use of this station.
 	 */
 	init() {
-		// Accept tag codes from spot's scannerInput property
-		this.getSpotPropertyAccessor<string>("scannerInput", code => {
-			if (code) {
-				this.gotIdCode(code);
-				log('XXX got code', code);
-			}
-		});
 		super.init();
 	}
 
@@ -187,13 +161,13 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
 	}
 
 	// Spoon-fed tag code to this station
-	simulateRfid(code: string) {
-		this.gotIdCode(code);
+	simulateRfid(code: string, processIiwari?: boolean) {
+		this.gotIdCode(code, processIiwari);
 	}
 
 	/*	All stations use ID tag for identification, so must implement this.
 	 */
-	protected abstract gotIdCode(idCode: string): void;
+	protected abstract gotIdCode(idCode: string, processIiwari?: boolean): void;
 }
 
 
@@ -237,7 +211,17 @@ class Reception extends Station {
 	/**
 	 * This station got an id code (i.e., NFC/RFID tag serial number). Do what needs to be done.
 	 */
-	protected gotIdCode(idCode: string) {
+	protected gotIdCode(idCode: string, processIiwari?: boolean) {
+		let badgeName = undefined;
+
+		if (processIiwari) {
+			try {
+				[badgeName, idCode] = idCode.split(':');
+			} catch {
+				log('Could not parse Iiwari QR code');
+				return
+			}
+		}
 		let record = this.recordFromRfidCode(idCode);
 		if (record) { // Already known visitor
 			log("Reception returning visitor", record.name, record.$puid);
@@ -247,6 +231,9 @@ class Reception extends Station {
 			log("Reception new visitor ID", idCode, record.$puid);
 			record.whenJoined = Date.now();
 			record.idCode = idCode;
+			if (badgeName) {
+				record.badgeName = badgeName;
+			}
 			this.messageProp.value = "Welcome!";
 		}
 
