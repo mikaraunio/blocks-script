@@ -202,7 +202,8 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
  */
 class Reception extends Station {
 	private nameProp: PropertyAccessor<string>;		// Name and email entered at this spot
-	private email: PropertyAccessor<string>;
+	private emailProp: PropertyAccessor<string>;
+	private colorProp: PropertyAccessor<string>;
 	private messageProp: PropertyAccessor<string>;	// Message I can show to visitor
 
 	constructor(spotPath: string, owner: VisitorTracking) {
@@ -218,9 +219,13 @@ class Reception extends Station {
 			"name",
 			updatedName => this.getCurrVisitor().name = updatedName
 		);
-		this.email = this.getSpotParameterAccessor<string>(
+		this.emailProp = this.getSpotParameterAccessor<string>(
 			"email",
 			updatedEmail => this.getCurrVisitor().email = updatedEmail
+		);
+		this.colorProp = this.getSpotParameterAccessor<string>(
+			"olor",
+			updatedColor => this.getCurrVisitor().color = updatedColor
 		);
 		/*	Hook up the common 'message' Spot parameter, often used to show a
 			personalized message to visitors.
@@ -260,7 +265,7 @@ class Reception extends Station {
 		log("Reception received visitor name", visitorData.name, visitorData.$puid);
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
 		this.nameProp.value = visitorData.name;
-		this.email.value = visitorData.email;
+		this.emailProp.value = visitorData.email;
 		return true;
 	}
 

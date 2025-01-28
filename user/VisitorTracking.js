@@ -195,7 +195,8 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         Reception.prototype.init = function () {
             var _this = this;
             this.nameProp = this.getSpotParameterAccessor("name", function (updatedName) { return _this.getCurrVisitor().name = updatedName; });
-            this.email = this.getSpotParameterAccessor("email", function (updatedEmail) { return _this.getCurrVisitor().email = updatedEmail; });
+            this.emailProp = this.getSpotParameterAccessor("email", function (updatedEmail) { return _this.getCurrVisitor().email = updatedEmail; });
+            this.colorProp = this.getSpotParameterAccessor("olor", function (updatedColor) { return _this.getCurrVisitor().color = updatedColor; });
             this.messageProp = this.getSpotParameterAccessor("message");
             _super.prototype.init.call(this);
         };
@@ -218,7 +219,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             log("Reception received visitor name", visitorData.name, visitorData.$puid);
             _super.prototype.receivedVisitor.call(this, visitorData);
             this.nameProp.value = visitorData.name;
-            this.email.value = visitorData.email;
+            this.emailProp.value = visitorData.email;
             return true;
         };
         Reception.prototype.lostVisitor = function (visitor) {
