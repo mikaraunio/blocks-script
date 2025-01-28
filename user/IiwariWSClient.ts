@@ -30,8 +30,8 @@ export class IiwariWSClient extends Script {
 		).then((connection: WebsocketConnection) => {
 			this.connection = connection;
 			console.log('Iiwari WS: Connected')
-			connection.subscribe('textReceived', this.handleMessage);
-			connection.subscribe('finish', this.handleFinish);
+			connection.subscribe('textReceived', (sender: WebsocketConnection, message: TextMessage) => this.handleMessage(sender, message));
+			connection.subscribe('finish', (sender) => this.handleFinish(sender));
 			this.sendHeartbeat();
 			this.waitForReceiveTimeout();
 		}).catch((error) => {

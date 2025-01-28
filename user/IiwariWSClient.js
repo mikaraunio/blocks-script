@@ -38,8 +38,8 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             SimpleWebsocket_1.SimpleWebsocket.connect(URL, 8192, HEADERS).then(function (connection) {
                 _this.connection = connection;
                 console.log('Iiwari WS: Connected');
-                connection.subscribe('textReceived', _this.handleMessage);
-                connection.subscribe('finish', _this.handleFinish);
+                connection.subscribe('textReceived', function (sender, message) { return _this.handleMessage(sender, message); });
+                connection.subscribe('finish', function (sender) { return _this.handleFinish(sender); });
                 _this.sendHeartbeat();
                 _this.waitForReceiveTimeout();
             }).catch(function (error) {
