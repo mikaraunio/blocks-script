@@ -5,7 +5,7 @@ import { SimpleWebsocket, WebsocketConnection, TextMessage } from "system/Simple
 const RECONN_DELAY_MS = 2.5 * 1000;
 const HEARTBEAT_INTERVAL_MS = 0;
 const RECEIVE_TIMEOUT_MS = 30 * 1000;
-const URL = 'ws://192.168.2.245:8123/'
+const URL = 'wss://dash.iiwari.cloud/api/v1/sites/01937750-6649-c7b2-cb9c-81305a6e45c3/stream?filter=kalman'
 const HEADERS = {
 	'Authorization': 'Bearer c7IIiWxOXC6jWwSPDvSWDKf5lfEUcsR79djeK5T3ScRKOMWFy4hVhU5N3l5PaOsi7VsUeXF3i7o8yfcTaB',
 }
