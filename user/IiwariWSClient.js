@@ -20,7 +20,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
     var RECONN_DELAY_MS = 2.5 * 1000;
     var HEARTBEAT_INTERVAL_MS = 0;
     var RECEIVE_TIMEOUT_MS = 30 * 1000;
-    var URL = 'wss://dash.iiwari.cloud/api/v1/sites/01937750-6649-c7b2-cb9c-81305a6e45c3/stream?filter=kalman';
+    var URL = 'wss://dash.iiwari.cloud/api/v1/sites/016fd235-8e10-1486-23f6-5e6cc6f4827b/stream?filter=kalman';
     var HEADERS = {
         'Authorization': 'Bearer c7IIiWxOXC6jWwSPDvSWDKf5lfEUcsR79djeK5T3ScRKOMWFy4hVhU5N3l5PaOsi7VsUeXF3i7o8yfcTaB',
     };
