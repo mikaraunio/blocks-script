@@ -11,9 +11,9 @@ const HEADERS = {
 
 export class IiwariWSClient extends Script {
 	private mLastMessage = "";
-  private reconnectAwaiter: CancelablePromise<void>;
-  private heartbeatAwaiter: CancelablePromise<void>;
-  private connection: WebsocketConnection;
+	private reconnectAwaiter: CancelablePromise<void>;
+	private heartbeatAwaiter: CancelablePromise<void>;
+	private connection: WebsocketConnection;
 
 	public constructor(env: ScriptEnv) {
 		super(env);
@@ -22,45 +22,52 @@ export class IiwariWSClient extends Script {
 
 	private connect() {
 		SimpleWebsocket.connect(
-      URL,
-      8192,
-      HEADERS
-    ).then((connection: WebsocketConnection) => {
-      this.connection = connection;
-      console.log('Iiwari WS connected')
-      connection.subscribe('textReceived', this.handleMessage);
-      connection.subscribe('finish', this.handleFinish);
-      this.sendHeartbeat();
-		})
+			URL,
+			8192,
+			HEADERS
+		).then((connection: WebsocketConnection) => {
+			this.connection = connection;
+			console.log('Iiwari WS: Connected')
+			connection.subscribe('textReceived', this.handleMessage);
+			connection.subscribe('finish', this.handleFinish);
+			this.sendHeartbeat();
+		}).catch((error) => {
+			console.log('Iiwari WS: Connection failed, error:', error);
+			this.reconnect();
+		});
 	}
 
-  private sendHeartbeat() {
-    if (!this.connection) {
-      console.log('Connection undefined in heartbeat sender')
-      return;
-    }
+	private sendHeartbeat() {
+		if (!this.connection) {
+			console.log('Iivari WS: Connection undefined in heartbeat sender')
+			return;
+		}
 
-    this.connection.sendText('');
-    console.log('Sent heartbeat')
-    if (this.heartbeatAwaiter) {
-      this.heartbeatAwaiter.cancel();
-    }
-    this.heartbeatAwaiter = wait(HEARTBEAT_INTERVAL_MS);
-    this.heartbeatAwaiter.then(() => this.sendHeartbeat());
-  }
+		this.connection.sendText('');
+		if (this.heartbeatAwaiter) {
+			this.heartbeatAwaiter.cancel();
+		}
+		this.heartbeatAwaiter = wait(HEARTBEAT_INTERVAL_MS);
+		this.heartbeatAwaiter.then(() => this.sendHeartbeat());
+	}
 
-  private handleFinish(sender: WebsocketConnection) {
-    console.log('Iiwari WS disconnected, reconnecting in ' + RECONN_DELAY_MS + ' ms');
-    if (this.heartbeatAwaiter) {
-      this.heartbeatAwaiter.cancel();
-      this.heartbeatAwaiter = undefined;
-    }
-    if (this.reconnectAwaiter) {
-      this.reconnectAwaiter.cancel();
-    }
-    this.reconnectAwaiter = wait(RECONN_DELAY_MS);
-    this.reconnectAwaiter.then(() => this.connect());
-  }
+	private handleFinish(sender: WebsocketConnection) {
+		console.log('Iiwari WS: Disconnected, reconnecting in ' + RECONN_DELAY_MS + ' ms');
+		this.reconnect();
+	}
+
+	private reconnect() {
+		console.log('Iiwari WS: Reconnecting in ' + RECONN_DELAY_MS + ' ms');
+		if (this.heartbeatAwaiter) {
+			this.heartbeatAwaiter.cancel();
+			this.heartbeatAwaiter = undefined;
+		}
+		if (this.reconnectAwaiter) {
+			this.reconnectAwaiter.cancel();
+		}
+		this.reconnectAwaiter = wait(RECONN_DELAY_MS);
+		this.reconnectAwaiter.then(() => this.connect());
+	}
 
 	private handleMessage(sender: WebsocketConnection, message: TextMessage) {
 		console.log(message.text);

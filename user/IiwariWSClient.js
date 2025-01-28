@@ -35,20 +35,22 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             var _this = this;
             SimpleWebsocket_1.SimpleWebsocket.connect(URL, 8192, HEADERS).then(function (connection) {
                 _this.connection = connection;
-                console.log('Iiwari WS connected');
+                console.log('Iiwari WS: Connected');
                 connection.subscribe('textReceived', _this.handleMessage);
                 connection.subscribe('finish', _this.handleFinish);
                 _this.sendHeartbeat();
+            }).catch(function (error) {
+                console.log('Iiwari WS: Connection failed, error:', error);
+                _this.reconnect();
             });
         };
         IiwariWSClient.prototype.sendHeartbeat = function () {
             var _this = this;
             if (!this.connection) {
-                console.log('Connection undefined in heartbeat sender');
+                console.log('Iivari WS: Connection undefined in heartbeat sender');
                 return;
             }
             this.connection.sendText('');
-            console.log('Sent heartbeat');
             if (this.heartbeatAwaiter) {
                 this.heartbeatAwaiter.cancel();
             }
@@ -56,8 +58,12 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             this.heartbeatAwaiter.then(function () { return _this.sendHeartbeat(); });
         };
         IiwariWSClient.prototype.handleFinish = function (sender) {
+            console.log('Iiwari WS: Disconnected, reconnecting in ' + RECONN_DELAY_MS + ' ms');
+            this.reconnect();
+        };
+        IiwariWSClient.prototype.reconnect = function () {
             var _this = this;
-            console.log('Iiwari WS disconnected, reconnecting in ' + RECONN_DELAY_MS + ' ms');
+            console.log('Iiwari WS: Reconnecting in ' + RECONN_DELAY_MS + ' ms');
             if (this.heartbeatAwaiter) {
                 this.heartbeatAwaiter.cancel();
                 this.heartbeatAwaiter = undefined;
