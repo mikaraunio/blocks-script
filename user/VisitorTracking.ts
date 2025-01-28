@@ -21,7 +21,7 @@ import {StationBase, VisitorRecordBase, VisitorScriptBase} from "../lib/VisitorD
 
 // Constants you may want to change:
 const DEBUG = true;	// Set to false to disable verbose logging
-const kMobileSpot = "Visitor";
+const kMobileSpot = "Mob1";
 
 @record("Data we track for each visitor")
 class QRCodeAndPhoneData extends RecordBase implements VisitorRecordBase {
@@ -49,9 +49,11 @@ class VisitorPhone {
 			mobile to the matching data record.
 		*/
 		this.rfidProperty = owner.getProperty<string>(
-			'Spot.Visitor.' + visitor.identity + '.parameter.rfid',
+			'Spot.' + kMobileSpot + '.' + visitor.identity + '.parameter.rfid',
 			rfid => this.visitorRfidCode(rfid)
 		);
+		log('Spot.' + kMobileSpot + '.' + visitor.identity + '.parameter.rfid');
+		log(this.rfidProperty);
 
 		// Listen for this visitor's phone disconnecting
 		visitor.subscribe('finish', () => this.visitorGone());

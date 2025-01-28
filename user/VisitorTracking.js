@@ -30,7 +30,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.VisitorTracking = void 0;
     var DEBUG = true;
-    var kMobileSpot = "Visitor";
+    var kMobileSpot = "Mob1";
     var QRCodeAndPhoneData = (function (_super) {
         __extends(QRCodeAndPhoneData, _super);
         function QRCodeAndPhoneData() {
@@ -87,7 +87,9 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             this.visitor = visitor;
             log("VisitorPhone id and record", visitor.identity, visitor.record ? visitor.record.$puid : 'no data');
             this.record = visitor.record;
-            this.rfidProperty = owner.getProperty('Spot.Visitor.' + visitor.identity + '.parameter.rfid', function (rfid) { return _this.visitorRfidCode(rfid); });
+            this.rfidProperty = owner.getProperty('Spot.' + kMobileSpot + '.' + visitor.identity + '.parameter.rfid', function (rfid) { return _this.visitorRfidCode(rfid); });
+            log('Spot.' + kMobileSpot + '.' + visitor.identity + '.parameter.rfid');
+            log(this.rfidProperty);
             visitor.subscribe('finish', function () { return _this.visitorGone(); });
         }
         VisitorPhone.prototype.visitorRfidCode = function (rfid) {
