@@ -61,7 +61,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
                 this.receiveTimeoutAwaiter.cancel();
             }
             this.receiveTimeoutAwaiter = wait(RECEIVE_TIMEOUT_MS);
-            this.heartbeatAwaiter.then(function () {
+            this.receiveTimeoutAwaiter.then(function () {
                 if (!_this.connection) {
                     console.log('Iivari WS: Connection already closed when entering receive timeout handler.');
                     return;
@@ -112,8 +112,8 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             this.reconnectAwaiter.then(function () { return _this.connect(); });
         };
         IiwariWSClient.prototype.handleMessage = function (sender, message) {
-            this.waitForReceiveTimeout();
             console.log(message.text);
+            this.waitForReceiveTimeout();
         };
         return IiwariWSClient;
     }(Script_1.Script));
