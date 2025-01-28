@@ -17,8 +17,9 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IiwariWSClient = void 0;
-    var RECONN_DELAY_MS = 2500;
-    var HEARTBEAT_INTERVAL_MS = 5000;
+    var RECONN_DELAY_MS = 2.5 * 1000;
+    var HEARTBEAT_INTERVAL_MS = 0;
+    var RECEIVE_TIMEOUT_MS = 30 * 1000;
     var URL = 'ws://192.168.2.245:8123/';
     var HEADERS = {
         'Authorization': 'Bearer c7IIiWxOXC6jWwSPDvSWDKf5lfEUcsR79djeK5T3ScRKOMWFy4hVhU5N3l5PaOsi7VsUeXF3i7o8yfcTaB',
@@ -28,6 +29,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         function IiwariWSClient(env) {
             var _this = _super.call(this, env) || this;
             _this.mLastMessage = "";
+            _this.connection = undefined;
             _this.connect();
             return _this;
         }
@@ -39,15 +41,45 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
                 connection.subscribe('textReceived', _this.handleMessage);
                 connection.subscribe('finish', _this.handleFinish);
                 _this.sendHeartbeat();
+                _this.waitForReceiveTimeout();
             }).catch(function (error) {
                 console.log('Iiwari WS: Connection failed, error:', error);
                 _this.reconnect();
             });
         };
+        IiwariWSClient.prototype.waitForReceiveTimeout = function () {
+            var _this = this;
+            if (RECEIVE_TIMEOUT_MS == 0) {
+                console.log('Iivari WS: Disabling receive timeouts');
+                return;
+            }
+            if (!this.connection) {
+                console.log('Iivari WS: skipping receiveTimeout, not connected');
+                return;
+            }
+            if (this.receiveTimeoutAwaiter) {
+                this.receiveTimeoutAwaiter.cancel();
+            }
+            this.receiveTimeoutAwaiter = wait(HEARTBEAT_INTERVAL_MS);
+            this.heartbeatAwaiter.then(function () {
+                if (!_this.connection) {
+                    console.log('Iivari WS: Connection already closed when entering receive timeout handler.');
+                    return;
+                }
+                console.log('Iivari WS: No messages received in ' + HEARTBEAT_INTERVAL_MS + ' ms, disconnecting.');
+                _this.connection.disconnect();
+                _this.connection = undefined;
+                _this.reconnect();
+            });
+        };
         IiwariWSClient.prototype.sendHeartbeat = function () {
             var _this = this;
+            if (HEARTBEAT_INTERVAL_MS == 0) {
+                console.log('Iivari WS: Disabling heartbeat messages');
+                return;
+            }
             if (!this.connection) {
-                console.log('Iivari WS: Connection undefined in heartbeat sender');
+                console.log('Iivari WS: Skipping heartbeat send, not connected');
                 return;
             }
             this.connection.sendText('');
@@ -59,6 +91,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         };
         IiwariWSClient.prototype.handleFinish = function (sender) {
             console.log('Iiwari WS: Disconnected, reconnecting in ' + RECONN_DELAY_MS + ' ms');
+            this.connection = undefined;
             this.reconnect();
         };
         IiwariWSClient.prototype.reconnect = function () {
@@ -68,6 +101,10 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
                 this.heartbeatAwaiter.cancel();
                 this.heartbeatAwaiter = undefined;
             }
+            if (this.receiveTimeoutAwaiter) {
+                this.receiveTimeoutAwaiter.cancel();
+                this.receiveTimeoutAwaiter = undefined;
+            }
             if (this.reconnectAwaiter) {
                 this.reconnectAwaiter.cancel();
             }
@@ -75,6 +112,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             this.reconnectAwaiter.then(function () { return _this.connect(); });
         };
         IiwariWSClient.prototype.handleMessage = function (sender, message) {
+            this.waitForReceiveTimeout();
             console.log(message.text);
         };
         return IiwariWSClient;

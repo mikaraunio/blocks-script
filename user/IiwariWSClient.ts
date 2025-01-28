@@ -2,8 +2,9 @@ import {Script, ScriptEnv} from "system_lib/Script";
 import {property, resource} from "system_lib/Metadata";
 import { SimpleWebsocket, WebsocketConnection, TextMessage } from "system/SimpleWebsocket";
 
-const RECONN_DELAY_MS = 2500;
-const HEARTBEAT_INTERVAL_MS = 5000;
+const RECONN_DELAY_MS = 2.5 * 1000;
+const HEARTBEAT_INTERVAL_MS = 0;
+const RECEIVE_TIMEOUT_MS = 30 * 1000;
 const URL = 'ws://192.168.2.245:8123/'
 const HEADERS = {
 	'Authorization': 'Bearer c7IIiWxOXC6jWwSPDvSWDKf5lfEUcsR79djeK5T3ScRKOMWFy4hVhU5N3l5PaOsi7VsUeXF3i7o8yfcTaB',
@@ -13,7 +14,8 @@ export class IiwariWSClient extends Script {
 	private mLastMessage = "";
 	private reconnectAwaiter: CancelablePromise<void>;
 	private heartbeatAwaiter: CancelablePromise<void>;
-	private connection: WebsocketConnection;
+	private receiveTimeoutAwaiter: CancelablePromise<void>;
+	private connection: WebsocketConnection | undefined = undefined;
 
 	public constructor(env: ScriptEnv) {
 		super(env);
@@ -31,15 +33,49 @@ export class IiwariWSClient extends Script {
 			connection.subscribe('textReceived', this.handleMessage);
 			connection.subscribe('finish', this.handleFinish);
 			this.sendHeartbeat();
+			this.waitForReceiveTimeout();
 		}).catch((error) => {
 			console.log('Iiwari WS: Connection failed, error:', error);
 			this.reconnect();
 		});
 	}
 
-	private sendHeartbeat() {
+	private waitForReceiveTimeout() {
+		if (RECEIVE_TIMEOUT_MS == 0) {
+			console.log('Iivari WS: Disabling receive timeouts')
+			return;
+		}
+
 		if (!this.connection) {
-			console.log('Iivari WS: Connection undefined in heartbeat sender')
+			console.log('Iivari WS: skipping receiveTimeout, not connected')
+			return;
+		}
+
+		if (this.receiveTimeoutAwaiter) {
+			this.receiveTimeoutAwaiter.cancel();
+		}
+		this.receiveTimeoutAwaiter = wait(HEARTBEAT_INTERVAL_MS);
+		this.heartbeatAwaiter.then(() => {
+			if (!this.connection) {
+				console.log('Iivari WS: Connection already closed when entering receive timeout handler.')
+				return;
+			}
+			console.log('Iivari WS: No messages received in ' + HEARTBEAT_INTERVAL_MS + ' ms, disconnecting.')
+			this.connection.disconnect();
+			this.connection = undefined;
+			this.reconnect();
+		});
+
+	}
+
+	private sendHeartbeat() {
+		if (HEARTBEAT_INTERVAL_MS == 0) {
+			console.log('Iivari WS: Disabling heartbeat messages')
+			return;
+		}
+
+		if (!this.connection) {
+			console.log('Iivari WS: Skipping heartbeat send, not connected')
 			return;
 		}
 
@@ -53,6 +89,7 @@ export class IiwariWSClient extends Script {
 
 	private handleFinish(sender: WebsocketConnection) {
 		console.log('Iiwari WS: Disconnected, reconnecting in ' + RECONN_DELAY_MS + ' ms');
+		this.connection = undefined;
 		this.reconnect();
 	}
 
@@ -62,6 +99,10 @@ export class IiwariWSClient extends Script {
 			this.heartbeatAwaiter.cancel();
 			this.heartbeatAwaiter = undefined;
 		}
+		if (this.receiveTimeoutAwaiter) {
+			this.receiveTimeoutAwaiter.cancel();
+			this.receiveTimeoutAwaiter = undefined;
+		}
 		if (this.reconnectAwaiter) {
 			this.reconnectAwaiter.cancel();
 		}
@@ -70,6 +111,7 @@ export class IiwariWSClient extends Script {
 	}
 
 	private handleMessage(sender: WebsocketConnection, message: TextMessage) {
+		this.waitForReceiveTimeout();
 		console.log(message.text);
 	}
 }
