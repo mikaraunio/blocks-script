@@ -17,7 +17,7 @@ import {MobileSpot, DisplaySpot, Spot, Visitor} from "system/Spot";
 import {ScriptEnv, PropertyAccessor} from "system_lib/Script";
 import {RecordBase} from "../system_lib/ScriptBase";
 import {record, field, id, callable, parameter, spotParameter} from "system_lib/Metadata";
-import {StationBase, VisitorRecordBase, VisitorScriptBase, VisitorPhoneBase} from "../lib/VisitorData";
+import {StationBase, VisitorRecordBase, VisitorScriptBase} from "../lib/VisitorData";
 
 // Constants you may want to change:
 const DEBUG = true;	// Set to false to disable verbose logging
@@ -36,7 +36,50 @@ class QRCodeAndPhoneData extends RecordBase implements VisitorRecordBase {
 	@field() location: string;	  // Most recenly reported location (from Locator block)
 }
 
-class VisitorPhone extends VisitorPhoneBase<QRCodeAndPhoneData, Station> {
+class VisitorPhone {
+	private rfidProperty: PropertyAccessor<string>;
+	private record: QRCodeAndPhoneData;
+
+	constructor(private owner: VisitorTracking, private visitor: Visitor<QRCodeAndPhoneData>) {
+		log("VisitorPhone id and record", visitor.identity, visitor.record ? visitor.record.$puid : 'no data');
+
+		this.record = visitor.record;
+
+		/*	Listen for 'rfid' parameter, passed in from QR code through URL, allowing me to bind the
+			mobile to the matching data record.
+		*/
+		this.rfidProperty = owner.getProperty<string>(
+			'Spot.Visitor.' + visitor.identity + '.parameter.rfid',
+			rfid => this.visitorRfidCode(rfid)
+		);
+
+		// Listen for this visitor's phone disconnecting
+		visitor.subscribe('finish', () => this.visitorGone());
+	}
+
+	/**
+	 * Received RFID code that should allow me to find the corresponding data record,
+	 * and set my phone identity there, binding the two together.
+	 */
+	private visitorRfidCode(rfid: string) {
+		log("VisitorPhone rfid", rfid);
+		if (!this.record) {
+			var associateRecord = this.owner.getRecordSec(QRCodeAndPhoneData, 'idCode', rfid);
+			if (associateRecord) {
+				associateRecord.phone = this.visitor.identity;
+				this.record = associateRecord;
+			} else {
+				log("Got RFID", rfid, "with no corresponding data record");
+			}
+		}
+	}
+
+	/** Visitor disconnected - do what's appropriate here.
+	*/
+	private visitorGone() {
+		log("VisitorPhone disconnected");
+		this.rfidProperty.close(); // Do not leak prop accessors for each reconnection
+	}
 }
 
 /*	My main class, implementing this user script. I inherit most functionality from my
@@ -44,7 +87,7 @@ class VisitorPhone extends VisitorPhoneBase<QRCodeAndPhoneData, Station> {
 	as well as the type of my Stations (defined elsewhere in this file). Since I don't
 	use visitors' phones at all, I omit the last parameter to VisitorScriptBase.
  */
-export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneData, VisitorPhone> {
+export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneData> {
 	constructor(env : ScriptEnv) {
 		super(env);
 
@@ -84,11 +127,6 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 			throw "No such station/spot path"
 	}
 
-	gotPhone(phone: VisitorPhone): void {
-		super.gotPhone(phone);
-		log('got phone', phone);
-	}
-
 	private listenForVisitors() {
 		const mobile = Spot[kMobileSpot] as MobileSpot;	// Get designated Spot
 
@@ -107,32 +145,8 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 			console.log(kMobileSpot, "is not a MobileSpot");
 	}
 
-	/**
-	 * A visitor connected to me. Listen for interesting messages from that visitor. Here
-	 * were only listening for the visitor's location to change, updating the current
-	 * location in our data accordingly. We're not actually using this for anything here,
-	 * but this can still be useful to analyze where visitors go, how long they stay before going
-	 * somewhere else, etc, since all such data is also logged into the data log (CSV file)
-	 * associated with each visitor.
-	 */
 	private gotVisitorConnection(visitor: Visitor<QRCodeAndPhoneData>) {
-		let phone = new VisitorPhone(this, visitor, QRCodeAndPhoneData);
-		phone.init();
-    log(visitor);
-    log(visitor.identity);
-    log(visitor.record);
-    return;
-		if (visitor.record.whenJoined)	// Not a new visitor if whenJoined already set
-			console.log("Visitor phone re-connected, ID", visitor.identity);
-		else {
-			visitor.record.whenJoined = Date.now();
-			console.log("New visitor phone connected, ID", visitor.identity);
-		}
-
-		visitor.subscribe('location', (sender, message) => {
-			visitor.record.location = message.location;
-			console.log("Visitor ID", visitor.identity, "now at location", message.location);
-		});
+		new VisitorPhone(this, visitor);
 	}
 }
 
