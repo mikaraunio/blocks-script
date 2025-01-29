@@ -156,6 +156,5 @@ export class IiwariWSClient extends Script {
 	private handleMessage(sender: WebsocketConnection, message: TextMessage) {
 		this.lastReceivedTimestamp = Date.now();
 		console.log(message.text);
-		(((Script as any).user.VisitorTracking) as VisitorTracking).simulateRfid('FOO', 'FOOFOO')
 	}
 }

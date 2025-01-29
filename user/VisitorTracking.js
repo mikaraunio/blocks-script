@@ -177,7 +177,12 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             return _super !== null && _super.apply(this, arguments) || this;
         }
         Station.prototype.init = function () {
+            var _this = this;
             _super.prototype.init.call(this);
+            this.getSpotPropertyAccessor("scannerInput", function (code) {
+                if (code)
+                    _this.gotIdCode(code);
+            });
         };
         Station.prototype.recordFromRfidCode = function (rfidCode) {
             return this.owner.getRecordSec(QRCodeAndPhoneData, 'idCode', rfidCode);
