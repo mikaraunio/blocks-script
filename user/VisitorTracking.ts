@@ -154,7 +154,7 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
 	 */
 	init() {
 		super.init();
-		this.getSpotPropertyAccessor<string>("scannerInput", code => {
+		this.getSpotParameterAccessor<string>("uwbInput", code => {
 			if (code)
 				this.gotIdCode(code);
 		});

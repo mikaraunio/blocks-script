@@ -179,7 +179,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         Station.prototype.init = function () {
             var _this = this;
             _super.prototype.init.call(this);
-            this.getSpotPropertyAccessor("scannerInput", function (code) {
+            this.getSpotParameterAccessor("uwbInput", function (code) {
                 if (code)
                     _this.gotIdCode(code);
             });
