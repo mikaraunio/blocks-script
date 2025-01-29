@@ -1,6 +1,7 @@
 import {Script, ScriptEnv} from "system_lib/Script";
 import {property, resource} from "system_lib/Metadata";
 import { SimpleWebsocket, WebsocketConnection, TextMessage } from "system/SimpleWebsocket";
+import { VisitorTracking } from "./VisitorTracking";
 
 /*
 
@@ -155,5 +156,6 @@ export class IiwariWSClient extends Script {
 	private handleMessage(sender: WebsocketConnection, message: TextMessage) {
 		this.lastReceivedTimestamp = Date.now();
 		console.log(message.text);
+		(((Script as any).user.VisitorTracking) as VisitorTracking).simulateRfid('FOO', 'FOOFOO')
 	}
 }

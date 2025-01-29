@@ -118,6 +118,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
         IiwariWSClient.prototype.handleMessage = function (sender, message) {
             this.lastReceivedTimestamp = Date.now();
             console.log(message.text);
+            (Script_1.Script.user.VisitorTracking).simulateRfid('FOO', 'FOOFOO');
         };
         return IiwariWSClient;
     }(Script_1.Script));
