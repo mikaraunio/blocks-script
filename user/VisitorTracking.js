@@ -97,10 +97,12 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         VisitorPhone.prototype.visitorRfidCode = function (rfid) {
             log("VisitorPhone rfid", rfid);
             if (!this.record) {
+                log('New VisitorPhone, associating to rfid');
                 var associateRecord = this.owner.getRecordSec(QRCodeAndPhoneData, 'idCode', rfid);
                 if (associateRecord) {
                     associateRecord.phone = this.visitor.identity;
                     this.record = associateRecord;
+                    log('VisitorPhone associated');
                 }
                 else {
                     log("Got RFID", rfid, "with no corresponding data record");
