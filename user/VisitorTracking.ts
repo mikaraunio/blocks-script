@@ -366,7 +366,7 @@ class Trigger3Station extends Station {
 	}
 
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
-		const FADETIME = 2;
+		const FADETIME = 1;
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
 		if (!visitorData.color)
 			return false
@@ -377,15 +377,15 @@ class Trigger3Station extends Station {
 	}
 
 	lostVisitor(visitor: QRCodeAndPhoneData): void {
-		const FADETIME = 2;
+		const FADETIME = 1;
 		super.lostVisitor(visitor);
 		if (!visitor.color)
 			return
 
 		for (let i=10; i <= 15; i++) {
-			(Artnet['test_' + i]['Red'] as Channel).fadeTo(100, FADETIME);
-			(Artnet['test_' + i]['Green'] as Channel).fadeTo(100, FADETIME);
-			(Artnet['test_' + i]['Blue'] as Channel).fadeTo(100, FADETIME);
+			(Artnet['test_' + i]['Red'] as Channel).fadeTo(0, FADETIME);
+			(Artnet['test_' + i]['Green'] as Channel).fadeTo(0, FADETIME);
+			(Artnet['test_' + i]['Blue'] as Channel).fadeTo(0, FADETIME);
 		}
 	}
 }

@@ -326,7 +326,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
                 this.lostVisitor(record);
         };
         Trigger3Station.prototype.receivedVisitor = function (visitorData) {
-            var FADETIME = 2;
+            var FADETIME = 1;
             _super.prototype.receivedVisitor.call(this, visitorData);
             if (!visitorData.color)
                 return false;
@@ -336,14 +336,14 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             return true;
         };
         Trigger3Station.prototype.lostVisitor = function (visitor) {
-            var FADETIME = 2;
+            var FADETIME = 1;
             _super.prototype.lostVisitor.call(this, visitor);
             if (!visitor.color)
                 return;
             for (var i = 10; i <= 15; i++) {
-                Artnet_1.Artnet['test_' + i]['Red'].fadeTo(100, FADETIME);
-                Artnet_1.Artnet['test_' + i]['Green'].fadeTo(100, FADETIME);
-                Artnet_1.Artnet['test_' + i]['Blue'].fadeTo(100, FADETIME);
+                Artnet_1.Artnet['test_' + i]['Red'].fadeTo(0, FADETIME);
+                Artnet_1.Artnet['test_' + i]['Green'].fadeTo(0, FADETIME);
+                Artnet_1.Artnet['test_' + i]['Blue'].fadeTo(0, FADETIME);
             }
         };
         return Trigger3Station;
