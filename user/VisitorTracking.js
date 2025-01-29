@@ -61,10 +61,12 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         ], QRCodeAndPhoneData.prototype, "email", void 0);
         __decorate([
             (0, Metadata_1.field)(),
+            (0, Metadata_1.spotParameter)(),
             __metadata("design:type", String)
         ], QRCodeAndPhoneData.prototype, "badgeName", void 0);
         __decorate([
             (0, Metadata_1.field)(),
+            (0, Metadata_1.spotParameter)(),
             __metadata("design:type", String)
         ], QRCodeAndPhoneData.prototype, "currentStation", void 0);
         __decorate([
@@ -75,10 +77,6 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             (0, Metadata_1.field)(),
             __metadata("design:type", Boolean)
         ], QRCodeAndPhoneData.prototype, "briefed", void 0);
-        __decorate([
-            (0, Metadata_1.field)(),
-            __metadata("design:type", String)
-        ], QRCodeAndPhoneData.prototype, "location", void 0);
         QRCodeAndPhoneData = __decorate([
             (0, Metadata_1.record)("Data we track for each visitor")
         ], QRCodeAndPhoneData);

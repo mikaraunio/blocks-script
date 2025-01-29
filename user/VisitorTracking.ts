@@ -19,11 +19,10 @@ class QRCodeAndPhoneData extends RecordBase implements VisitorRecordBase {
 	@field() @spotParameter() name: string;			// Name provided by visitor
 	@field() @spotParameter() color: string;			// Favorite color provided by visitor
 	@field() @spotParameter() email: string;			// Email address provided by visitor
-	@field() badgeName: string; // Iiwari physical badge identifier
-	@field() currentStation: string; // Currently (or last) visited station
+	@field() @spotParameter() badgeName: string; // Iiwari physical badge identifier
+	@field() @spotParameter() currentStation: string; // Currently (or last) visited station
 	@field() whenJoined: number;	// UNIX timestamp when first connected
 	@field() briefed: boolean;		// The visitor has been briefed at the info station
-	@field() location: string;	  // Most recenly reported location (from Locator block)
 }
 
 class VisitorPhone {
