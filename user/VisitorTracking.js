@@ -109,6 +109,9 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
                 }
                 Spot_1.Spot['1_Regi'].gotoBlock('/QRcode');
             }
+            else {
+                log('Phone already associated, keeping old association');
+            }
         };
         VisitorPhone.prototype.visitorGone = function () {
             log("VisitorPhone disconnected");
