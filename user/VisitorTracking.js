@@ -25,7 +25,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system_lib/Metadata", "../lib/VisitorData"], function (require, exports, Spot_1, ScriptBase_1, Metadata_1, VisitorData_1) {
+define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/ScriptBase", "system_lib/Metadata", "../lib/VisitorData"], function (require, exports, Artnet_1, Spot_1, ScriptBase_1, Metadata_1, VisitorData_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.VisitorTracking = void 0;
@@ -326,8 +326,25 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
                 this.lostVisitor(record);
         };
         Trigger3Station.prototype.receivedVisitor = function (visitorData) {
+            var FADETIME = 2;
             _super.prototype.receivedVisitor.call(this, visitorData);
+            if (!visitorData.color)
+                return false;
+            for (var i = 10; i <= 15; i++) {
+                Artnet_1.Artnet['test_' + i][visitorData.color].fadeTo(100, FADETIME);
+            }
             return true;
+        };
+        Trigger3Station.prototype.lostVisitor = function (visitor) {
+            var FADETIME = 2;
+            _super.prototype.lostVisitor.call(this, visitor);
+            if (!visitor.color)
+                return;
+            for (var i = 10; i <= 15; i++) {
+                Artnet_1.Artnet['test_' + i]['Red'].fadeTo(100, FADETIME);
+                Artnet_1.Artnet['test_' + i]['Green'].fadeTo(100, FADETIME);
+                Artnet_1.Artnet['test_' + i]['Blue'].fadeTo(100, FADETIME);
+            }
         };
         return Trigger3Station;
     }(Station));

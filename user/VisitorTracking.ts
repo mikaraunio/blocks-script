@@ -2,6 +2,7 @@
 	All Rights Reserved.
  */
 
+import {Artnet, Channel} from 'system/Artnet';
 import {MobileSpot, DisplaySpot, Spot, Visitor} from "system/Spot";
 import {ScriptEnv, PropertyAccessor} from "system_lib/Script";
 import {RecordBase} from "../system_lib/ScriptBase";
@@ -365,8 +366,27 @@ class Trigger3Station extends Station {
 	}
 
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
+		const FADETIME = 2;
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
-		return true;
+		if (!visitorData.color)
+			return false
+		for (let i=10; i <= 15; i++) {
+			(Artnet['test_' + i][visitorData.color] as Channel).fadeTo(100, FADETIME);
+		}
+		return true
+	}
+
+	lostVisitor(visitor: QRCodeAndPhoneData): void {
+		const FADETIME = 2;
+		super.lostVisitor(visitor);
+		if (!visitor.color)
+			return
+
+		for (let i=10; i <= 15; i++) {
+			(Artnet['test_' + i]['Red'] as Channel).fadeTo(100, FADETIME);
+			(Artnet['test_' + i]['Green'] as Channel).fadeTo(100, FADETIME);
+			(Artnet['test_' + i]['Blue'] as Channel).fadeTo(100, FADETIME);
+		}
 	}
 }
 
