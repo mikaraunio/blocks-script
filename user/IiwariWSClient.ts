@@ -126,6 +126,9 @@ export class IiwariWSClient extends Script {
 		let ts, type, node, zone;
 
 		this.lastReceivedTimestamp = Date.now();
+		if (message.text == '{"mark":1}')
+			return;
+
 		console.log(message.text);
 		try {
 			({ts, type, node, zone} = JSON.parse(message.text));

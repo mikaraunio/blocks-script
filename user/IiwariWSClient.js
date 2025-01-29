@@ -124,6 +124,8 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             var _a;
             var ts, type, node, zone;
             this.lastReceivedTimestamp = Date.now();
+            if (message.text == '{"mark":1}')
+                return;
             console.log(message.text);
             try {
                 (_a = JSON.parse(message.text), ts = _a.ts, type = _a.type, node = _a.node, zone = _a.zone);
