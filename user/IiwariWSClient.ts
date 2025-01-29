@@ -141,10 +141,13 @@ export class IiwariWSClient extends Script {
 			return
 
 		if (zone == TRIG3_ZONE) {
-			if (type == 20)
+			if (type == 20) {
 				this.trigger3ArrivalAccessor.value = node
-			else
+				this.trigger3DepartureAccessor.value = ""
+			} else {
 				this.trigger3DepartureAccessor.value = node
+				this.trigger3ArrivalAccessor.value = ""
+			}
 		}
 	}
 }
