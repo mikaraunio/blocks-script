@@ -61,6 +61,7 @@ class VisitorPhone {
 			} else {
 				log("Got RFID", rfid, "with no corresponding data record");
 			}
+			Spot['1_Regi'].gotoBlock('/QRcode');
 		}
 	}
 

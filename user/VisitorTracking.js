@@ -105,6 +105,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
                 else {
                     log("Got RFID", rfid, "with no corresponding data record");
                 }
+                Spot_1.Spot['1_Regi'].gotoBlock('/QRcode');
             }
         };
         VisitorPhone.prototype.visitorGone = function () {
