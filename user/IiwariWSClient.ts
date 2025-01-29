@@ -1,48 +1,9 @@
-import {Script, ScriptEnv} from "system_lib/Script";
+import {Script, ScriptEnv, PropertyAccessor} from "system_lib/Script";
 import {property, resource} from "system_lib/Metadata";
 import { SimpleWebsocket, WebsocketConnection, TextMessage } from "system/SimpleWebsocket";
-import { VisitorTracking } from "./VisitorTracking";
 
-/*
 
-{
-  "zones": [
-    {
-      "id": "01937754-1f08-88b2-9f9e-0d2772e16582",
-      "name": "Paikannusalue"
-    },
-    {
-      "id": "01937757-eb43-c8c8-8812-b8aa0ba9768c",
-      "name": "Trigger1"
-    },
-    {
-      "id": "01937758-b940-9b3f-8122-058e92efef0b",
-      "name": "Trigger2"
-    },
-    {
-      "id": "01937758-e2e7-294f-5cd0-36168e5729a2",
-      "name": "Trigger3"
-    },
-    {
-      "id": "01937759-48bf-4012-2225-49b653b93247",
-      "name": "Messut"
-    },
-    {
-      "id": "0193775a-042a-2efa-e5e8-f5dea9b7f330",
-      "name": "Materials"
-    },
-    {
-      "id": "0193775a-5003-ce40-18e2-b32b8a15c5ea",
-      "name": "Moving screen"
-    },
-    {
-      "id": "0193775a-a067-b818-9d85-b7216020c229",
-      "name": "Screens"
-    }
-  ]
-}
-
-*/
+const TRIG3_ZONE = "01937758-e2e7-294f-5cd0-36168e5729a2"
 
 const RECONN_DELAY_MS = 2.5 * 1000;
 const HEARTBEAT_INTERVAL_MS = 0;
@@ -61,9 +22,17 @@ export class IiwariWSClient extends Script {
 	private receiveTimeoutAwaiter: CancelablePromise<void> | undefined = undefined;
 	private connection: WebsocketConnection | undefined = undefined;
 	private lastReceivedTimestamp: number | undefined = undefined;
+	private regiArrivalAccessor: PropertyAccessor<string>;
+	private regiDepartureAccessor: PropertyAccessor<string>;
+	private trigger3ArrivalAccessor: PropertyAccessor<string>;
+	private trigger3DepartureAccessor: PropertyAccessor<string>;
 
 	public constructor(env: ScriptEnv) {
 		super(env);
+		this.regiArrivalAccessor = this.getProperty<string>('Spot["1_Regi"].parameter.uwbArrival');
+		this.regiDepartureAccessor = this.getProperty<string>('Spot["1_Regi"].parameter.uwbDeparture');
+		this.trigger3ArrivalAccessor = this.getProperty<string>('Spot["8_Paikannus"].parameter.uwbArrival');
+		this.trigger3DepartureAccessor = this.getProperty<string>('Spot["8_Paikannus"].parameter.uwbDeparture');
 		console.log('Iiwari WS: Started')
 		this.connect();
 	}
@@ -154,7 +123,24 @@ export class IiwariWSClient extends Script {
 	}
 
 	private handleMessage(sender: WebsocketConnection, message: TextMessage) {
+		let ts, type, node, zone;
+
 		this.lastReceivedTimestamp = Date.now();
 		console.log(message.text);
+		try {
+			({ts, type, node, zone} = JSON.parse(message.text));
+		} catch {
+			console.log('Iiwari WS: JSON parsing failed, skipping')
+		}
+
+		if (type != 20 && type != 21)
+			return
+
+		if (zone == TRIG3_ZONE) {
+			if (type == 20)
+				this.trigger3ArrivalAccessor.value = node
+			else
+				this.trigger3DepartureAccessor.value = node
+		}
 	}
 }

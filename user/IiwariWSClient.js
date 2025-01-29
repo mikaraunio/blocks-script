@@ -17,6 +17,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IiwariWSClient = void 0;
+    var TRIG3_ZONE = "01937758-e2e7-294f-5cd0-36168e5729a2";
     var RECONN_DELAY_MS = 2.5 * 1000;
     var HEARTBEAT_INTERVAL_MS = 0;
     var RECEIVE_TIMEOUT_MS = 30 * 1000;
@@ -34,6 +35,10 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             _this.receiveTimeoutAwaiter = undefined;
             _this.connection = undefined;
             _this.lastReceivedTimestamp = undefined;
+            _this.regiArrivalAccessor = _this.getProperty('Spot["1_Regi"].parameter.uwbArrival');
+            _this.regiDepartureAccessor = _this.getProperty('Spot["1_Regi"].parameter.uwbDeparture');
+            _this.trigger3ArrivalAccessor = _this.getProperty('Spot["8_Paikannus"].parameter.uwbArrival');
+            _this.trigger3DepartureAccessor = _this.getProperty('Spot["8_Paikannus"].parameter.uwbDeparture');
             console.log('Iiwari WS: Started');
             _this.connect();
             return _this;
@@ -116,8 +121,24 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             this.reconnectAwaiter.then(function () { return _this.connect(); });
         };
         IiwariWSClient.prototype.handleMessage = function (sender, message) {
+            var _a;
+            var ts, type, node, zone;
             this.lastReceivedTimestamp = Date.now();
             console.log(message.text);
+            try {
+                (_a = JSON.parse(message.text), ts = _a.ts, type = _a.type, node = _a.node, zone = _a.zone);
+            }
+            catch (_b) {
+                console.log('Iiwari WS: JSON parsing failed, skipping');
+            }
+            if (type != 20 && type != 21)
+                return;
+            if (zone == TRIG3_ZONE) {
+                if (type == 20)
+                    this.trigger3ArrivalAccessor.value = node;
+                else
+                    this.trigger3DepartureAccessor.value = node;
+            }
         };
         return IiwariWSClient;
     }(Script_1.Script));

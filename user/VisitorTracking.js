@@ -122,6 +122,7 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         function VisitorTracking(env) {
             var _this = _super.call(this, env) || this;
             _this.addStation(new Reception("1_Regi", _this));
+            _this.addStation(new Trigger3Station("8_Paikannus", _this));
             _this.listenForVisitors();
             return _this;
         }
@@ -179,9 +180,13 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         Station.prototype.init = function () {
             var _this = this;
             _super.prototype.init.call(this);
-            this.getSpotParameterAccessor("uwbInput", function (code) {
+            this.getSpotParameterAccessor("uwbArrival", function (code) {
                 if (code)
                     _this.gotIdCode(code);
+            });
+            this.getSpotParameterAccessor("uwbDeparture", function (code) {
+                if (code)
+                    _this.lostIdCode(code);
             });
         };
         Station.prototype.recordFromRfidCode = function (rfidCode) {
@@ -207,6 +212,9 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             _super.prototype.init.call(this);
         };
         Reception.prototype.gotIdCode = function (idCode, processIiwari) {
+            log('Ignoring UWB token arrival, Reception only handles explcit registrations');
+        };
+        Reception.prototype.simulateRfid = function (idCode, processIiwari) {
             var _a;
             var badgeName = undefined;
             if (processIiwari) {
@@ -235,6 +243,12 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             }
             this.gotVisitor(record);
         };
+        Reception.prototype.lostIdCode = function (idCode) {
+            log("Reception station lost UWB token", idCode);
+            var record = this.recordFromRfidCode(idCode);
+            if (record)
+                this.lostVisitor(record);
+        };
         Reception.prototype.receivedVisitor = function (visitorData) {
             log("Reception received visitor name", visitorData.name, visitorData.$puid);
             _super.prototype.receivedVisitor.call(this, visitorData);
@@ -245,7 +259,6 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             return true;
         };
         Reception.prototype.lostVisitor = function (visitor) {
-            this.activateByGotoBlock(false);
             _super.prototype.lostVisitor.call(this, visitor);
         };
         return Reception;
@@ -267,6 +280,12 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             else
                 Spot_1.Spot[this.spotPath].gotoBlock("/Active/Visitor/Unknown");
         };
+        InfoStation.prototype.lostIdCode = function (idCode) {
+            log("Info station lost UWB token", idCode);
+            var record = this.recordFromRfidCode(idCode);
+            if (record)
+                this.lostVisitor(record);
+        };
         InfoStation.prototype.receivedVisitor = function (visitorData) {
             _super.prototype.receivedVisitor.call(this, visitorData);
             this.nameProp.value = visitorData.name;
@@ -284,29 +303,31 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
         };
         return InfoStation;
     }(Station));
-    var GoodByeStation = (function (_super) {
-        __extends(GoodByeStation, _super);
-        function GoodByeStation(spotPath, owner) {
+    var Trigger3Station = (function (_super) {
+        __extends(Trigger3Station, _super);
+        function Trigger3Station(spotPath, owner) {
             var _this = _super.call(this, spotPath, owner) || this;
             _this.spotPath = spotPath;
             return _this;
         }
-        GoodByeStation.prototype.init = function () {
-            this.nameProp = this.getSpotParameterAccessor("name");
+        Trigger3Station.prototype.init = function () {
             _super.prototype.init.call(this);
         };
-        GoodByeStation.prototype.gotIdCode = function (idCode) {
-            log("GoodByeStation got ID", idCode);
+        Trigger3Station.prototype.gotIdCode = function (idCode) {
+            log("Trigger3 got UWB token", idCode);
             this.gotVisitor(this.recordFromRfidCode(idCode));
         };
-        GoodByeStation.prototype.receivedVisitor = function (visitorData) {
+        Trigger3Station.prototype.lostIdCode = function (idCode) {
+            log("Trigger3 station lost UWB token", idCode);
+            var record = this.recordFromRfidCode(idCode);
+            if (record)
+                this.lostVisitor(record);
+        };
+        Trigger3Station.prototype.receivedVisitor = function (visitorData) {
             _super.prototype.receivedVisitor.call(this, visitorData);
-            this.nameProp.value = visitorData.name || "nameless person";
-            this.activateByGotoBlock(true);
-            this.owner.leftTheBuilding(visitorData);
             return true;
         };
-        return GoodByeStation;
+        return Trigger3Station;
     }(Station));
     function log() {
         var messages = [];

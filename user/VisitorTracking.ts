@@ -79,7 +79,7 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 		super(env);
 
 		this.addStation(new Reception("1_Regi", this));
-		// this.addStation(new GoodByeStation("VisitorTracking.ScreenRight",this));
+		this.addStation(new Trigger3Station("8_Paikannus",this));
 		// this.addStation(new InfoStation("VisitorTracking.ScreenLeft",this));
 
 		this.listenForVisitors();
@@ -154,9 +154,13 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
 	 */
 	init() {
 		super.init();
-		this.getSpotParameterAccessor<string>("uwbInput", code => {
+		this.getSpotParameterAccessor<string>("uwbArrival", code => {
 			if (code)
 				this.gotIdCode(code);
+		});
+		this.getSpotParameterAccessor<string>("uwbDeparture", code => {
+			if (code)
+				this.lostIdCode(code);
 		});
 	}
 
@@ -176,6 +180,7 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
 	/*	All stations use ID tag for identification, so must implement this.
 	 */
 	protected abstract gotIdCode(idCode: string, processIiwari?: boolean): void;
+	protected abstract lostIdCode(idCode: string): void;
 }
 
 
@@ -222,6 +227,10 @@ class Reception extends Station {
 	 * This station got an id code (i.e., NFC/RFID tag serial number). Do what needs to be done.
 	 */
 	protected gotIdCode(idCode: string, processIiwari?: boolean) {
+		log('Ignoring UWB token arrival, Reception only handles explcit registrations')
+	}
+
+	simulateRfid(idCode: string, processIiwari?: boolean) {
 		let badgeName = undefined;
 
 		if (processIiwari) {
@@ -247,14 +256,14 @@ class Reception extends Station {
 			this.messageProp.value = "Welcome!";
 		}
 
-		// const otherVisitor = this.hasVisitor() && !this.isCurrentVisitor(record);
 		this.gotVisitor(record);
+	}
 
-		// if (otherVisitor) {
-		// 	// Wait a bit to make sure it deactivates before being re-activated
-		// 	wait(200).then(() => this.activateByGotoBlock(true));
-		// } else
-		// 	this.activateByGotoBlock(true);
+	protected lostIdCode(idCode: string) {
+		log("Reception station lost UWB token", idCode);
+		const record = this.recordFromRfidCode(idCode);
+		if (record)
+			this.lostVisitor(record);
 	}
 
 	// Got a visitor. Present visitor's current data on UI
@@ -269,7 +278,6 @@ class Reception extends Station {
 	}
 
 	lostVisitor(visitor: QRCodeAndPhoneData) {
-		this.activateByGotoBlock(false);
 		super.lostVisitor(visitor);
 	}
 }
@@ -300,6 +308,13 @@ class InfoStation extends Station {
 			Spot[this.spotPath].gotoBlock("/Active/Visitor/Unknown");
 	}
 
+	protected lostIdCode(idCode: string) {
+		log("Info station lost UWB token", idCode);
+		const record = this.recordFromRfidCode(idCode);
+		if (record)
+			this.lostVisitor(record);
+	}
+
 	/**	Specified visitor is visiting this station.
 		Do what's appropriate there.
 	*/
@@ -324,7 +339,7 @@ class InfoStation extends Station {
 
 /*	Visitor leaves. Detach ID tag and archive visitor's data.
 */
-class GoodByeStation extends Station {
+class Trigger3Station extends Station {
 	private nameProp: PropertyAccessor<string>;	// Name I can show to visitor on station
 
 	constructor(public readonly spotPath: string, owner: VisitorTracking) {
@@ -332,27 +347,23 @@ class GoodByeStation extends Station {
 	}
 
 	init() {
-		// Hook up to Spot parameters used to show goodbye message
-		this.nameProp = this.getSpotParameterAccessor<string>("name");
 		super.init();
 	}
 
 	protected gotIdCode(idCode: string) {
-		log("GoodByeStation got ID", idCode);
+		log("Trigger3 got UWB token", idCode);
 		this.gotVisitor(this.recordFromRfidCode(idCode));
 	}
 
-	/**	Specified visitor is visiting this station.
-		Do what's appropriate there.
-	*/
+	protected lostIdCode(idCode: string) {
+		log("Trigger3 station lost UWB token", idCode);
+		const record = this.recordFromRfidCode(idCode);
+		if (record)
+			this.lostVisitor(record);
+	}
+
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
-		// const score = calcScore(visitorData);
-		this.nameProp.value = visitorData.name || "nameless person";
-		this.activateByGotoBlock(true); // Shows score using attractor
-
-		// Tell my main script that this visitor is now gone
-		this.owner.leftTheBuilding(visitorData);
 		return true;
 	}
 }
