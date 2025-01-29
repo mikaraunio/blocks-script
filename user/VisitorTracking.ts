@@ -236,6 +236,8 @@ class Reception extends Station {
 		if (processIiwari) {
 			try {
 				[badgeName, idCode] = idCode.split(':');
+				badgeName = badgeName.toUpperCase();
+				idCode = idCode.toLowerCase();
 			} catch {
 				log('Could not parse Iiwari QR code');
 				return

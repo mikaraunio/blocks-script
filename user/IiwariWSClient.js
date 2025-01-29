@@ -127,6 +127,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             console.log(message.text);
             try {
                 (_a = JSON.parse(message.text), ts = _a.ts, type = _a.type, node = _a.node, zone = _a.zone);
+                node = node.toLowerCase();
             }
             catch (_b) {
                 console.log('Iiwari WS: JSON parsing failed, skipping');

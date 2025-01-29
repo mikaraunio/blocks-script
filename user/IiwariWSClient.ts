@@ -129,6 +129,7 @@ export class IiwariWSClient extends Script {
 		console.log(message.text);
 		try {
 			({ts, type, node, zone} = JSON.parse(message.text));
+			node = node.toLowerCase();
 		} catch {
 			console.log('Iiwari WS: JSON parsing failed, skipping')
 		}

@@ -220,6 +220,8 @@ define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system
             if (processIiwari) {
                 try {
                     _a = idCode.split(':'), badgeName = _a[0], idCode = _a[1];
+                    badgeName = badgeName.toUpperCase();
+                    idCode = idCode.toLowerCase();
                 }
                 catch (_b) {
                     log('Could not parse Iiwari QR code');
