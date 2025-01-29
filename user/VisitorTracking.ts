@@ -175,9 +175,10 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
  * Reception where new visitor firs register, or can update existing visitor data.
  */
 class Reception extends Station {
-	private nameProp: PropertyAccessor<string>;		// Name and email entered at this spot
+	private nameProp: PropertyAccessor<string>;
 	private emailProp: PropertyAccessor<string>;
 	private colorProp: PropertyAccessor<string>;
+	private connectqrcodeProp: PropertyAccessor<string>;
 	private messageProp: PropertyAccessor<string>;	// Message I can show to visitor
 
 	constructor(spotPath: string, owner: VisitorTracking) {
@@ -201,6 +202,7 @@ class Reception extends Station {
 			"color",
 			updatedColor => this.getCurrVisitor().color = updatedColor
 		);
+		this.connectqrcodeProp = this.getSpotParameterAccessor<string>("connectqrcode");
 		/*	Hook up the common 'message' Spot parameter, often used to show a
 			personalized message to visitors.
 		 */
@@ -254,6 +256,7 @@ class Reception extends Station {
 		this.nameProp.value = visitorData.name;
 		this.emailProp.value = visitorData.email;
 		this.colorProp.value = visitorData.color;
+		this.connectqrcodeProp.value = `https://spaceodyssey.online/spot/index.ftl?mobile=${kMobileSpot}&param-rfid=${visitorData.idCode}`
 		return true;
 	}
 
