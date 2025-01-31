@@ -299,7 +299,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
         }
         Trigger3Station.prototype.receivedVisitor = function (visitorData) {
             var FADEOUT_TIME = 0.5;
-            var BLACKOUT_AWAIT_MS = 1000;
+            var BLACKOUT_AWAIT_MS = 2000;
             var FADEIN_TIME = 1;
             _super.prototype.receivedVisitor.call(this, visitorData);
             if (visitorData.color) {
@@ -318,7 +318,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
         Trigger3Station.prototype.lostVisitor = function (visitor) {
             var FADEOUT_TIME = 1;
             var FADEIN_TIME = 0.5;
-            var BLACKOUT_AWAIT_MS = 1000;
+            var BLACKOUT_AWAIT_MS = 2500;
             _super.prototype.lostVisitor.call(this, visitor);
             if (visitor.color) {
                 Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);

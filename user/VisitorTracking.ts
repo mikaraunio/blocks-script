@@ -317,7 +317,7 @@ class Trigger3Station extends Station {
 
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
 		const FADEOUT_TIME = 0.5;
-		const BLACKOUT_AWAIT_MS = 1000;
+		const BLACKOUT_AWAIT_MS = 2000;
 		const FADEIN_TIME = 1;
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
 
@@ -342,7 +342,7 @@ class Trigger3Station extends Station {
 	lostVisitor(visitor: QRCodeAndPhoneData): void {
 		const FADEOUT_TIME = 1;
 		const FADEIN_TIME = 0.5;
-		const BLACKOUT_AWAIT_MS = 1000;
+		const BLACKOUT_AWAIT_MS = 2500;
 		super.lostVisitor(visitor);
 
 		if (visitor.color) {
