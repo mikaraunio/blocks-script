@@ -330,9 +330,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             _super.prototype.receivedVisitor.call(this, visitorData);
             if (!visitorData.color)
                 return false;
-            for (var i = 10; i <= 15; i++) {
-                Artnet_1.Artnet['test_' + i][visitorData.color].fadeTo(100, FADETIME);
-            }
+            Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(100, FADETIME);
             return true;
         };
         Trigger3Station.prototype.lostVisitor = function (visitor) {
@@ -340,11 +338,9 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             _super.prototype.lostVisitor.call(this, visitor);
             if (!visitor.color)
                 return;
-            for (var i = 10; i <= 15; i++) {
-                Artnet_1.Artnet['test_' + i]['Red'].fadeTo(0, FADETIME);
-                Artnet_1.Artnet['test_' + i]['Green'].fadeTo(0, FADETIME);
-                Artnet_1.Artnet['test_' + i]['Blue'].fadeTo(0, FADETIME);
-            }
+            Artnet_1.Artnet['Neukkari_Xbar']['Red'].fadeTo(0, FADETIME);
+            Artnet_1.Artnet['Neukkari_Xbar']['Green'].fadeTo(0, FADETIME);
+            Artnet_1.Artnet['Neukkari_Xbar']['Blue'].fadeTo(0, FADETIME);
         };
         return Trigger3Station;
     }(Station));

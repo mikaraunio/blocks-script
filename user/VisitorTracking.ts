@@ -369,10 +369,8 @@ class Trigger3Station extends Station {
 		const FADETIME = 1;
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
 		if (!visitorData.color)
-			return false
-		for (let i=10; i <= 15; i++) {
-			(Artnet['test_' + i][visitorData.color] as Channel).fadeTo(100, FADETIME);
-		}
+			return false;
+		(Artnet['Neukkari_Xbar'][visitorData.color] as Channel).fadeTo(100, FADETIME);
 		return true
 	}
 
@@ -380,13 +378,11 @@ class Trigger3Station extends Station {
 		const FADETIME = 1;
 		super.lostVisitor(visitor);
 		if (!visitor.color)
-			return
+			return;
 
-		for (let i=10; i <= 15; i++) {
-			(Artnet['test_' + i]['Red'] as Channel).fadeTo(0, FADETIME);
-			(Artnet['test_' + i]['Green'] as Channel).fadeTo(0, FADETIME);
-			(Artnet['test_' + i]['Blue'] as Channel).fadeTo(0, FADETIME);
-		}
+		(Artnet['Neukkari_Xbar']['Red'] as Channel).fadeTo(0, FADETIME);
+		(Artnet['Neukkari_Xbar']['Green'] as Channel).fadeTo(0, FADETIME);
+		(Artnet['Neukkari_Xbar']['Blue'] as Channel).fadeTo(0, FADETIME);
 	}
 }
 
