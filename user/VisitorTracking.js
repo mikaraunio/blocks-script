@@ -307,7 +307,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
                 Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(1, FADEIN_TIME);
             }
             this.arrivalColorAccessor.value = visitorData.color;
-            this.arrivalNameAccessor.value = visitorData.name;
+            this.arrivalNameAccessor.value = 'Hello ' + visitorData.name;
             return true;
         };
         Trigger3Station.prototype.lostVisitor = function (visitor) {

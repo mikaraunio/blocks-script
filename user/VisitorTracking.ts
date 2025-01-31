@@ -328,7 +328,7 @@ class Trigger3Station extends Station {
 		}
 
 		this.arrivalColorAccessor.value = visitorData.color;
-		this.arrivalNameAccessor.value = visitorData.name;
+		this.arrivalNameAccessor.value = 'Hello ' + visitorData.name;
 
 		return true;
 	}
