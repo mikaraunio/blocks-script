@@ -298,17 +298,13 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             return _this;
         }
         Trigger3Station.prototype.receivedVisitor = function (visitorData) {
-            var BLACKOUT_AWAIT_MS = 2000;
             var FADEIN_TIME = 1;
             _super.prototype.receivedVisitor.call(this, visitorData);
             if (visitorData.color) {
                 Artnet_1.Artnet['Neukkari_Xbar'].Red.value = 0;
                 Artnet_1.Artnet['Neukkari_Xbar'].Green.value = 0;
                 Artnet_1.Artnet['Neukkari_Xbar'].Blue.value = 0;
-                var blackoutAwaiter = wait(BLACKOUT_AWAIT_MS);
-                blackoutAwaiter.then(function () {
-                    Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(1, FADEIN_TIME);
-                });
+                Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(1, FADEIN_TIME);
             }
             this.arrivalColorAccessor.value = visitorData.color;
             this.arrivalNameAccessor.value = visitorData.name;

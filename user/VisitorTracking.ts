@@ -316,7 +316,6 @@ class Trigger3Station extends Station {
 	}
 
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
-		const BLACKOUT_AWAIT_MS = 2000;
 		const FADEIN_TIME = 1;
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
 
@@ -325,11 +324,7 @@ class Trigger3Station extends Station {
 			(Artnet['Neukkari_Xbar'].Green as Channel).value = 0;
 			(Artnet['Neukkari_Xbar'].Blue as Channel).value = 0;
 
-			const blackoutAwaiter = wait(BLACKOUT_AWAIT_MS);
-			blackoutAwaiter.then(() => {
-				(Artnet['Neukkari_Xbar'][visitorData.color] as Channel).fadeTo(1, FADEIN_TIME);
-			});
-
+			(Artnet['Neukkari_Xbar'][visitorData.color] as Channel).fadeTo(1, FADEIN_TIME);
 		}
 
 		this.arrivalColorAccessor.value = visitorData.color;
