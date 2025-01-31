@@ -395,8 +395,8 @@ class RfidInterface extends BaseInterface {
 	set isPlaced(value: boolean) { this.mIsPlaced = value; }
 
 	receiveData(data: string, tag?: TagInfo) {
-		this.isPlaced = tag.isPlaced
 		this.tagNumber = tag.tagNumber;
+		this.isPlaced = tag.isPlaced
 	}
 
 	userFriendlyName() {

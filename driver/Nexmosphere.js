@@ -347,8 +347,8 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata", "../sy
             configurable: true
         });
         RfidInterface.prototype.receiveData = function (data, tag) {
-            this.isPlaced = tag.isPlaced;
             this.tagNumber = tag.tagNumber;
+            this.isPlaced = tag.isPlaced;
         };
         RfidInterface.prototype.userFriendlyName = function () {
             return "RFID";
