@@ -12,7 +12,6 @@ import {StationBase, VisitorRecordBase, VisitorScriptBase} from "../lib/VisitorD
 // Constants you may want to change:
 const DEBUG = true;	// Set to false to disable verbose logging
 const kMobileSpot = "Mob1";
-const SCREEN_ARRIVAL_LINGER_MS = 5000;
 
 @record("Data we track for each visitor")
 class QRCodeAndPhoneData extends RecordBase implements VisitorRecordBase {
@@ -307,7 +306,6 @@ class ScreensStation extends Station {
 }
 
 class Trigger3Station extends Station {
-	private clearArrivalAwaiter: CancelablePromise<void> | undefined = undefined;
 	private arrivalNameAccessor: PropertyAccessor<string>;
 	private arrivalColorAccessor: PropertyAccessor<string>;
 
@@ -319,6 +317,7 @@ class Trigger3Station extends Station {
 
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
 		const FADEOUT_TIME = 0.5;
+		const BLACKOUT_TIME = 1;
 		const FADEIN_TIME = 1;
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
 
@@ -327,25 +326,22 @@ class Trigger3Station extends Station {
 			(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0, FADEOUT_TIME);
 			(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0, FADEOUT_TIME);
 
-			(Artnet['Neukkari_Xbar'][visitorData.color] as Channel).fadeTo(1, FADEIN_TIME);
+			const blackoutAwaiter = wait(BLACKOUT_TIME);
+			blackoutAwaiter.then(() => {
+				(Artnet['Neukkari_Xbar'][visitorData.color] as Channel).fadeTo(1, FADEIN_TIME);
+			});
+
 		}
 
 		this.arrivalColorAccessor.value = visitorData.color;
 		this.arrivalNameAccessor.value = visitorData.name;
-		if (this.clearArrivalAwaiter) {
-			this.clearArrivalAwaiter.cancel();
-		}
-		this.clearArrivalAwaiter = wait(SCREEN_ARRIVAL_LINGER_MS);
-		this.clearArrivalAwaiter.then(() => {
-			this.arrivalNameAccessor.value = '';
-			this.clearArrivalAwaiter = undefined;
-		});
 
 		return true;
 	}
 
 	lostVisitor(visitor: QRCodeAndPhoneData): void {
 		const FADEOUT_TIME = 1;
+		const BLACKOUT_TIME = 1;
 		const FADEIN_TIME = 0.5;
 		super.lostVisitor(visitor);
 
@@ -354,10 +350,16 @@ class Trigger3Station extends Station {
 			(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0, FADEOUT_TIME);
 			(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0, FADEOUT_TIME);
 
-			(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(1, FADEIN_TIME);
-			(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0.20, FADEIN_TIME);
-			(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0.32, FADEIN_TIME);
+			const blackoutAwaiter = wait(BLACKOUT_TIME);
+			blackoutAwaiter.then(() => {
+				(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(1, FADEIN_TIME);
+				(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0.20, FADEIN_TIME);
+				(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0.32, FADEIN_TIME);
+			});
 		}
+
+    this.arrivalColorAccessor.value = '';
+    this.arrivalNameAccessor.value = '';
 	}
 }
 

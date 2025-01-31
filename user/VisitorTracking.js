@@ -31,7 +31,6 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
     exports.VisitorTracking = void 0;
     var DEBUG = true;
     var kMobileSpot = "Mob1";
-    var SCREEN_ARRIVAL_LINGER_MS = 5000;
     var QRCodeAndPhoneData = (function (_super) {
         __extends(QRCodeAndPhoneData, _super);
         function QRCodeAndPhoneData() {
@@ -294,46 +293,46 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
         function Trigger3Station(spotPath, owner) {
             var _this = _super.call(this, spotPath, owner) || this;
             _this.spotPath = spotPath;
-            _this.clearArrivalAwaiter = undefined;
             _this.arrivalNameAccessor = _this.owner.getProperty('Spot["4_NeukkariA"].parameter.latestArrivalName');
             _this.arrivalColorAccessor = _this.owner.getProperty('Spot["4_NeukkariA"].parameter.latestArrivalColor');
             return _this;
         }
         Trigger3Station.prototype.receivedVisitor = function (visitorData) {
-            var _this = this;
             var FADEOUT_TIME = 0.5;
+            var BLACKOUT_TIME = 1;
             var FADEIN_TIME = 1;
             _super.prototype.receivedVisitor.call(this, visitorData);
             if (visitorData.color) {
                 Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
-                Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(1, FADEIN_TIME);
+                var blackoutAwaiter = wait(BLACKOUT_TIME);
+                blackoutAwaiter.then(function () {
+                    Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(1, FADEIN_TIME);
+                });
             }
             this.arrivalColorAccessor.value = visitorData.color;
             this.arrivalNameAccessor.value = visitorData.name;
-            if (this.clearArrivalAwaiter) {
-                this.clearArrivalAwaiter.cancel();
-            }
-            this.clearArrivalAwaiter = wait(SCREEN_ARRIVAL_LINGER_MS);
-            this.clearArrivalAwaiter.then(function () {
-                _this.arrivalNameAccessor.value = '';
-                _this.clearArrivalAwaiter = undefined;
-            });
             return true;
         };
         Trigger3Station.prototype.lostVisitor = function (visitor) {
             var FADEOUT_TIME = 1;
+            var BLACKOUT_TIME = 1;
             var FADEIN_TIME = 0.5;
             _super.prototype.lostVisitor.call(this, visitor);
             if (visitor.color) {
                 Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
-                Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(1, FADEIN_TIME);
-                Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0.20, FADEIN_TIME);
-                Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0.32, FADEIN_TIME);
+                var blackoutAwaiter = wait(BLACKOUT_TIME);
+                blackoutAwaiter.then(function () {
+                    Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(1, FADEIN_TIME);
+                    Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0.20, FADEIN_TIME);
+                    Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0.32, FADEIN_TIME);
+                });
             }
+            this.arrivalColorAccessor.value = '';
+            this.arrivalNameAccessor.value = '';
         };
         return Trigger3Station;
     }(Station));
