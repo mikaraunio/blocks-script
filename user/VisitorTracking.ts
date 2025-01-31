@@ -355,9 +355,9 @@ class Trigger3Station extends Station {
 		(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0, FADEOUT_TIME);
 		(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0, FADEOUT_TIME);
 
-		(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(255, FADEIN_TIME);
-		(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(50, FADEIN_TIME);
-		(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(80, FADEIN_TIME);
+		(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(100, FADEIN_TIME);
+		(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(20, FADEIN_TIME);
+		(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(32, FADEIN_TIME);
 	}
 }
 

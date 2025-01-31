@@ -331,9 +331,9 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
             Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
             Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
-            Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(255, FADEIN_TIME);
-            Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(50, FADEIN_TIME);
-            Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(80, FADEIN_TIME);
+            Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(100, FADEIN_TIME);
+            Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(20, FADEIN_TIME);
+            Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(32, FADEIN_TIME);
         };
         return Trigger3Station;
     }(Station));
