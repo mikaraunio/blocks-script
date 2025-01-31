@@ -59,11 +59,11 @@ class VisitorPhone {
 			if (associateRecord) {
 				associateRecord.phone = this.visitor.identity;
 				this.record = associateRecord;
+				Spot['1_Regi'].gotoBlock('/QRcode');
 				log('VisitorPhone associated')
 			} else {
 				log("Got RFID", rfid, "with no corresponding data record");
 			}
-			// Spot['1_Regi'].gotoBlock('/QRcode');
 		} else {
 			log('Phone already associated, keeping old association')
 		}

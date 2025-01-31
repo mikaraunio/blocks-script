@@ -100,6 +100,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
                 if (associateRecord) {
                     associateRecord.phone = this.visitor.identity;
                     this.record = associateRecord;
+                    Spot_1.Spot['1_Regi'].gotoBlock('/QRcode');
                     log('VisitorPhone associated');
                 }
                 else {
