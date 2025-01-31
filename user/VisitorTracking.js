@@ -105,7 +105,6 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
                 else {
                     log("Got RFID", rfid, "with no corresponding data record");
                 }
-                Spot_1.Spot['1_Regi'].gotoBlock('/QRcode');
             }
             else {
                 log('Phone already associated, keeping old association');
