@@ -299,14 +299,14 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
         }
         Trigger3Station.prototype.receivedVisitor = function (visitorData) {
             var FADEOUT_TIME = 0.5;
-            var BLACKOUT_TIME = 1;
+            var BLACKOUT_AWAIT_MS = 1000;
             var FADEIN_TIME = 1;
             _super.prototype.receivedVisitor.call(this, visitorData);
             if (visitorData.color) {
                 Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
-                var blackoutAwaiter = wait(BLACKOUT_TIME);
+                var blackoutAwaiter = wait(BLACKOUT_AWAIT_MS);
                 blackoutAwaiter.then(function () {
                     Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(1, FADEIN_TIME);
                 });
@@ -317,14 +317,14 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
         };
         Trigger3Station.prototype.lostVisitor = function (visitor) {
             var FADEOUT_TIME = 1;
-            var BLACKOUT_TIME = 1;
             var FADEIN_TIME = 0.5;
+            var BLACKOUT_AWAIT_MS = 1000;
             _super.prototype.lostVisitor.call(this, visitor);
             if (visitor.color) {
                 Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
-                var blackoutAwaiter = wait(BLACKOUT_TIME);
+                var blackoutAwaiter = wait(BLACKOUT_AWAIT_MS);
                 blackoutAwaiter.then(function () {
                     Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(1, FADEIN_TIME);
                     Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0.20, FADEIN_TIME);
