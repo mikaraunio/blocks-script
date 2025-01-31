@@ -182,11 +182,13 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
 	/*	All stations use ID tag for identification, so must implement this.
 	 */
 	protected gotIdCode(idCode: string, processIiwari?: boolean) {
+		log("Station", this.spotPath, "got UWB token", idCode);
 		const record = this.recordFromRfidCode(idCode);
 		if (record)
 			this.gotVisitor(record);
 	}
 	protected lostIdCode(idCode: string) {
+		log("Station", this.spotPath, "lost UWB token", idCode);
 		const record = this.recordFromRfidCode(idCode);
 		if (record)
 			this.lostVisitor(record);
@@ -194,7 +196,7 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
 
 	lostVisitor(visitor: QRCodeAndPhoneData) {
 		super.lostVisitor(visitor);
-		this.owner.visits(visitor, undefined);
+		visitor.currentStation = '';
 	}
 }
 
@@ -302,20 +304,6 @@ class ScreensStation extends Station {
 		this.arrivalNameAccessor = this.getSpotParameterAccessor<string>("latestArrivalName");
 	}
 
-	init() {
-		super.init();
-	}
-
-	protected gotIdCode(idCode: string) {
-		super.gotIdCode(idCode);
-		log("Screens station receved RFID", idCode);
-	}
-
-	protected lostIdCode(idCode: string) {
-		super.lostIdCode(idCode);
-		log("Screens station lost UWB token", idCode);
-	}
-
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
 		this.arrivalNameAccessor.value = visitorData.name;
@@ -331,30 +319,11 @@ class ScreensStation extends Station {
 	}
 }
 
-
-/*	Visitor leaves. Detach ID tag and archive visitor's data.
-*/
 class Trigger3Station extends Station {
 	private nameProp: PropertyAccessor<string>;	// Name I can show to visitor on station
 
 	constructor(public readonly spotPath: string, owner: VisitorTracking) {
 		super(spotPath, owner);
-	}
-
-	init() {
-		super.init();
-	}
-
-	protected gotIdCode(idCode: string) {
-		super.gotIdCode(idCode);
-		log("Trigger3 got UWB token", idCode);
-	}
-
-	protected lostIdCode(idCode: string) {
-		log("Trigger3 station lost UWB token", idCode);
-		const record = this.recordFromRfidCode(idCode);
-		if (record)
-			this.lostVisitor(record);
 	}
 
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {

@@ -198,18 +198,20 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             this.gotIdCode(code, processIiwari);
         };
         Station.prototype.gotIdCode = function (idCode, processIiwari) {
+            log("Station", this.spotPath, "got UWB token", idCode);
             var record = this.recordFromRfidCode(idCode);
             if (record)
                 this.gotVisitor(record);
         };
         Station.prototype.lostIdCode = function (idCode) {
+            log("Station", this.spotPath, "lost UWB token", idCode);
             var record = this.recordFromRfidCode(idCode);
             if (record)
                 this.lostVisitor(record);
         };
         Station.prototype.lostVisitor = function (visitor) {
             _super.prototype.lostVisitor.call(this, visitor);
-            this.owner.visits(visitor, undefined);
+            visitor.currentStation = '';
         };
         return Station;
     }(VisitorData_1.StationBase));
@@ -284,17 +286,6 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             _this.arrivalNameAccessor = _this.getSpotParameterAccessor("latestArrivalName");
             return _this;
         }
-        ScreensStation.prototype.init = function () {
-            _super.prototype.init.call(this);
-        };
-        ScreensStation.prototype.gotIdCode = function (idCode) {
-            _super.prototype.gotIdCode.call(this, idCode);
-            log("Screens station receved RFID", idCode);
-        };
-        ScreensStation.prototype.lostIdCode = function (idCode) {
-            _super.prototype.lostIdCode.call(this, idCode);
-            log("Screens station lost UWB token", idCode);
-        };
         ScreensStation.prototype.receivedVisitor = function (visitorData) {
             var _this = this;
             _super.prototype.receivedVisitor.call(this, visitorData);
@@ -318,19 +309,6 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             _this.spotPath = spotPath;
             return _this;
         }
-        Trigger3Station.prototype.init = function () {
-            _super.prototype.init.call(this);
-        };
-        Trigger3Station.prototype.gotIdCode = function (idCode) {
-            _super.prototype.gotIdCode.call(this, idCode);
-            log("Trigger3 got UWB token", idCode);
-        };
-        Trigger3Station.prototype.lostIdCode = function (idCode) {
-            log("Trigger3 station lost UWB token", idCode);
-            var record = this.recordFromRfidCode(idCode);
-            if (record)
-                this.lostVisitor(record);
-        };
         Trigger3Station.prototype.receivedVisitor = function (visitorData) {
             var FADETIME = 1;
             _super.prototype.receivedVisitor.call(this, visitorData);
