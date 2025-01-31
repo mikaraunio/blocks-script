@@ -327,7 +327,7 @@ class Trigger3Station extends Station {
 			(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0, FADEOUT_TIME);
 			(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0, FADEOUT_TIME);
 
-			(Artnet['Neukkari_Xbar'][visitorData.color] as Channel).fadeTo(100, FADEIN_TIME);
+			(Artnet['Neukkari_Xbar'][visitorData.color] as Channel).fadeTo(1, FADEIN_TIME);
 		}
 
 		this.arrivalColorAccessor.value = visitorData.color;
@@ -348,16 +348,16 @@ class Trigger3Station extends Station {
 		const FADEOUT_TIME = 1;
 		const FADEIN_TIME = 0.5;
 		super.lostVisitor(visitor);
-		if (!visitor.color)
-			return;
 
-		(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(0, FADEOUT_TIME);
-		(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0, FADEOUT_TIME);
-		(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0, FADEOUT_TIME);
+		if (visitor.color) {
+			(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(0, FADEOUT_TIME);
+			(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0, FADEOUT_TIME);
+			(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0, FADEOUT_TIME);
 
-		(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(100, FADEIN_TIME);
-		(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(20, FADEIN_TIME);
-		(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(32, FADEIN_TIME);
+			(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(1, FADEIN_TIME);
+			(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0.20, FADEIN_TIME);
+			(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0.32, FADEIN_TIME);
+		}
 	}
 }
 

@@ -308,7 +308,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
                 Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
                 Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
-                Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(100, FADEIN_TIME);
+                Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(1, FADEIN_TIME);
             }
             this.arrivalColorAccessor.value = visitorData.color;
             this.arrivalNameAccessor.value = visitorData.name;
@@ -326,14 +326,14 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             var FADEOUT_TIME = 1;
             var FADEIN_TIME = 0.5;
             _super.prototype.lostVisitor.call(this, visitor);
-            if (!visitor.color)
-                return;
-            Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
-            Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
-            Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
-            Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(100, FADEIN_TIME);
-            Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(20, FADEIN_TIME);
-            Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(32, FADEIN_TIME);
+            if (visitor.color) {
+                Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
+                Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
+                Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
+                Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(1, FADEIN_TIME);
+                Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0.20, FADEIN_TIME);
+                Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0.32, FADEIN_TIME);
+            }
         };
         return Trigger3Station;
     }(Station));
