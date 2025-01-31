@@ -4,6 +4,7 @@ import { SimpleWebsocket, WebsocketConnection, TextMessage } from "system/Simple
 
 
 const TRIG3_ZONE = "01937758-e2e7-294f-5cd0-36168e5729a2"
+const SCREENS_ZONE = "0193775a-a067-b818-9d85-b7216020c229"
 
 const RECONN_DELAY_MS = 2.5 * 1000;
 const HEARTBEAT_INTERVAL_MS = 0;
@@ -26,6 +27,8 @@ export class IiwariWSClient extends Script {
 	private regiDepartureAccessor: PropertyAccessor<string>;
 	private trigger3ArrivalAccessor: PropertyAccessor<string>;
 	private trigger3DepartureAccessor: PropertyAccessor<string>;
+	private screensArrivalAccessor: PropertyAccessor<string>;
+	private screensDepartureAccessor: PropertyAccessor<string>;
 
 	public constructor(env: ScriptEnv) {
 		super(env);
@@ -33,6 +36,8 @@ export class IiwariWSClient extends Script {
 		this.regiDepartureAccessor = this.getProperty<string>('Spot["1_Regi"].parameter.uwbDeparture');
 		this.trigger3ArrivalAccessor = this.getProperty<string>('Spot["8_Paikannus"].parameter.uwbArrival');
 		this.trigger3DepartureAccessor = this.getProperty<string>('Spot["8_Paikannus"].parameter.uwbDeparture');
+		this.screensArrivalAccessor = this.getProperty<string>('Spot["4_NeukkariA"].parameter.uwbArrival');
+		this.screensDepartureAccessor = this.getProperty<string>('Spot["4_NeukkariA"].parameter.uwbDeparture');
 		console.log('Iiwari WS: Started')
 		this.connect();
 	}
@@ -147,6 +152,14 @@ export class IiwariWSClient extends Script {
 			} else {
 				this.trigger3DepartureAccessor.value = node
 				this.trigger3ArrivalAccessor.value = ""
+			}
+		} else if (zone == SCREENS_ZONE) {
+			if (type == 20) {
+				this.screensArrivalAccessor.value = node
+				this.screensDepartureAccessor.value = ""
+			} else {
+				this.screensDepartureAccessor.value = node
+				this.screensArrivalAccessor.value = ""
 			}
 		}
 	}

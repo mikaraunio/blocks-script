@@ -18,6 +18,7 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IiwariWSClient = void 0;
     var TRIG3_ZONE = "01937758-e2e7-294f-5cd0-36168e5729a2";
+    var SCREENS_ZONE = "0193775a-a067-b818-9d85-b7216020c229";
     var RECONN_DELAY_MS = 2.5 * 1000;
     var HEARTBEAT_INTERVAL_MS = 0;
     var RECEIVE_TIMEOUT_MS = 30 * 1000;
@@ -39,6 +40,8 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
             _this.regiDepartureAccessor = _this.getProperty('Spot["1_Regi"].parameter.uwbDeparture');
             _this.trigger3ArrivalAccessor = _this.getProperty('Spot["8_Paikannus"].parameter.uwbArrival');
             _this.trigger3DepartureAccessor = _this.getProperty('Spot["8_Paikannus"].parameter.uwbDeparture');
+            _this.screensArrivalAccessor = _this.getProperty('Spot["4_NeukkariA"].parameter.uwbArrival');
+            _this.screensDepartureAccessor = _this.getProperty('Spot["4_NeukkariA"].parameter.uwbDeparture');
             console.log('Iiwari WS: Started');
             _this.connect();
             return _this;
@@ -144,6 +147,16 @@ define(["require", "exports", "system_lib/Script", "system/SimpleWebsocket"], fu
                 else {
                     this.trigger3DepartureAccessor.value = node;
                     this.trigger3ArrivalAccessor.value = "";
+                }
+            }
+            else if (zone == SCREENS_ZONE) {
+                if (type == 20) {
+                    this.screensArrivalAccessor.value = node;
+                    this.screensDepartureAccessor.value = "";
+                }
+                else {
+                    this.screensDepartureAccessor.value = node;
+                    this.screensArrivalAccessor.value = "";
                 }
             }
         };
