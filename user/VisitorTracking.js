@@ -281,14 +281,36 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
     var ScreensStation = (function (_super) {
         __extends(ScreensStation, _super);
         function ScreensStation(spotPath, owner) {
-            var _this = _super.call(this, spotPath, owner) || this;
-            _this.clearArrivalAwaiter = undefined;
-            _this.arrivalNameAccessor = _this.getSpotParameterAccessor("latestArrivalName");
-            return _this;
+            return _super.call(this, spotPath, owner) || this;
         }
         ScreensStation.prototype.receivedVisitor = function (visitorData) {
-            var _this = this;
             _super.prototype.receivedVisitor.call(this, visitorData);
+            return true;
+        };
+        return ScreensStation;
+    }(Station));
+    var Trigger3Station = (function (_super) {
+        __extends(Trigger3Station, _super);
+        function Trigger3Station(spotPath, owner) {
+            var _this = _super.call(this, spotPath, owner) || this;
+            _this.spotPath = spotPath;
+            _this.clearArrivalAwaiter = undefined;
+            _this.arrivalNameAccessor = _this.owner.getProperty('Spot["4_NeukkariA"].parameter.latestArrivalName');
+            _this.arrivalColorAccessor = _this.owner.getProperty('Spot["4_NeukkariA"].parameter.latestArrivalColor');
+            return _this;
+        }
+        Trigger3Station.prototype.receivedVisitor = function (visitorData) {
+            var _this = this;
+            var FADEOUT_TIME = 0.5;
+            var FADEIN_TIME = 1;
+            _super.prototype.receivedVisitor.call(this, visitorData);
+            if (visitorData.color) {
+                Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
+                Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
+                Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
+                Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(100, FADEIN_TIME);
+            }
+            this.arrivalColorAccessor.value = visitorData.color;
             this.arrivalNameAccessor.value = visitorData.name;
             if (this.clearArrivalAwaiter) {
                 this.clearArrivalAwaiter.cancel();
@@ -300,31 +322,18 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             });
             return true;
         };
-        return ScreensStation;
-    }(Station));
-    var Trigger3Station = (function (_super) {
-        __extends(Trigger3Station, _super);
-        function Trigger3Station(spotPath, owner) {
-            var _this = _super.call(this, spotPath, owner) || this;
-            _this.spotPath = spotPath;
-            return _this;
-        }
-        Trigger3Station.prototype.receivedVisitor = function (visitorData) {
-            var FADETIME = 1;
-            _super.prototype.receivedVisitor.call(this, visitorData);
-            if (!visitorData.color)
-                return false;
-            Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(100, FADETIME);
-            return true;
-        };
         Trigger3Station.prototype.lostVisitor = function (visitor) {
-            var FADETIME = 1;
+            var FADEOUT_TIME = 1;
+            var FADEIN_TIME = 0.5;
             _super.prototype.lostVisitor.call(this, visitor);
             if (!visitor.color)
                 return;
-            Artnet_1.Artnet['Neukkari_Xbar']['Red'].fadeTo(0, FADETIME);
-            Artnet_1.Artnet['Neukkari_Xbar']['Green'].fadeTo(0, FADETIME);
-            Artnet_1.Artnet['Neukkari_Xbar']['Blue'].fadeTo(0, FADETIME);
+            Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
+            Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
+            Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
+            Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(255, FADEIN_TIME);
+            Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(50, FADEIN_TIME);
+            Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(80, FADEIN_TIME);
         };
         return Trigger3Station;
     }(Station));

@@ -296,16 +296,41 @@ class Reception extends Station {
 }
 
 class ScreensStation extends Station {
-	private clearArrivalAwaiter: CancelablePromise<void> | undefined = undefined;
-	private arrivalNameAccessor: PropertyAccessor<string>;
-
 	constructor(spotPath: string, owner: VisitorTracking) {
 		super(spotPath, owner);
-		this.arrivalNameAccessor = this.getSpotParameterAccessor<string>("latestArrivalName");
 	}
 
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
+		return true;
+	}
+}
+
+class Trigger3Station extends Station {
+	private clearArrivalAwaiter: CancelablePromise<void> | undefined = undefined;
+	private arrivalNameAccessor: PropertyAccessor<string>;
+	private arrivalColorAccessor: PropertyAccessor<string>;
+
+	constructor(public readonly spotPath: string, owner: VisitorTracking) {
+		super(spotPath, owner);
+		this.arrivalNameAccessor = this.owner.getProperty<string>('Spot["4_NeukkariA"].parameter.latestArrivalName');
+		this.arrivalColorAccessor = this.owner.getProperty<string>('Spot["4_NeukkariA"].parameter.latestArrivalColor');
+	}
+
+	receivedVisitor(visitorData: QRCodeAndPhoneData) {
+		const FADEOUT_TIME = 0.5;
+		const FADEIN_TIME = 1;
+		super.receivedVisitor(visitorData);	// Establishes my current visitor
+
+		if (visitorData.color) {
+			(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(0, FADEOUT_TIME);
+			(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0, FADEOUT_TIME);
+			(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0, FADEOUT_TIME);
+
+			(Artnet['Neukkari_Xbar'][visitorData.color] as Channel).fadeTo(100, FADEIN_TIME);
+		}
+
+		this.arrivalColorAccessor.value = visitorData.color;
 		this.arrivalNameAccessor.value = visitorData.name;
 		if (this.clearArrivalAwaiter) {
 			this.clearArrivalAwaiter.cancel();
@@ -314,36 +339,25 @@ class ScreensStation extends Station {
 		this.clearArrivalAwaiter.then(() => {
 			this.arrivalNameAccessor.value = '';
 			this.clearArrivalAwaiter = undefined;
-		})
+		});
+
 		return true;
-	}
-}
-
-class Trigger3Station extends Station {
-	private nameProp: PropertyAccessor<string>;	// Name I can show to visitor on station
-
-	constructor(public readonly spotPath: string, owner: VisitorTracking) {
-		super(spotPath, owner);
-	}
-
-	receivedVisitor(visitorData: QRCodeAndPhoneData) {
-		const FADETIME = 1;
-		super.receivedVisitor(visitorData);	// Establishes my current visitor
-		if (!visitorData.color)
-			return false;
-		(Artnet['Neukkari_Xbar'][visitorData.color] as Channel).fadeTo(100, FADETIME);
-		return true
 	}
 
 	lostVisitor(visitor: QRCodeAndPhoneData): void {
-		const FADETIME = 1;
+		const FADEOUT_TIME = 1;
+		const FADEIN_TIME = 0.5;
 		super.lostVisitor(visitor);
 		if (!visitor.color)
 			return;
 
-		(Artnet['Neukkari_Xbar']['Red'] as Channel).fadeTo(0, FADETIME);
-		(Artnet['Neukkari_Xbar']['Green'] as Channel).fadeTo(0, FADETIME);
-		(Artnet['Neukkari_Xbar']['Blue'] as Channel).fadeTo(0, FADETIME);
+		(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(0, FADEOUT_TIME);
+		(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0, FADEOUT_TIME);
+		(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0, FADEOUT_TIME);
+
+		(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(255, FADEIN_TIME);
+		(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(50, FADEIN_TIME);
+		(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(80, FADEIN_TIME);
 	}
 }
 
