@@ -316,15 +316,14 @@ class Trigger3Station extends Station {
 	}
 
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
-		const FADEOUT_TIME = 0.5;
 		const BLACKOUT_AWAIT_MS = 2000;
 		const FADEIN_TIME = 1;
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
 
 		if (visitorData.color) {
-			(Artnet['Neukkari_Xbar'].Red as Channel).fadeTo(0, FADEOUT_TIME);
-			(Artnet['Neukkari_Xbar'].Green as Channel).fadeTo(0, FADEOUT_TIME);
-			(Artnet['Neukkari_Xbar'].Blue as Channel).fadeTo(0, FADEOUT_TIME);
+			(Artnet['Neukkari_Xbar'].Red as Channel).value = 0;
+			(Artnet['Neukkari_Xbar'].Green as Channel).value = 0;
+			(Artnet['Neukkari_Xbar'].Blue as Channel).value = 0;
 
 			const blackoutAwaiter = wait(BLACKOUT_AWAIT_MS);
 			blackoutAwaiter.then(() => {
@@ -342,7 +341,7 @@ class Trigger3Station extends Station {
 	lostVisitor(visitor: QRCodeAndPhoneData): void {
 		const FADEOUT_TIME = 1;
 		const FADEIN_TIME = 0.5;
-		const BLACKOUT_AWAIT_MS = 2500;
+		const BLACKOUT_AWAIT_MS = 1800;
 		super.lostVisitor(visitor);
 
 		if (visitor.color) {
