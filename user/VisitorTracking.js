@@ -31,6 +31,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
     exports.VisitorTracking = void 0;
     var DEBUG = true;
     var kMobileSpot = "Mob1";
+    var SCREEN_ARRIVAL_LINGER_MS = 5000;
     var QRCodeAndPhoneData = (function (_super) {
         __extends(QRCodeAndPhoneData, _super);
         function QRCodeAndPhoneData() {
@@ -123,6 +124,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             var _this = _super.call(this, env) || this;
             _this.addStation(new Reception("1_Regi", _this));
             _this.addStation(new Trigger3Station("8_Paikannus", _this));
+            _this.addStation(new ScreensStation("4_NeukkariA", _this));
             _this.listenForVisitors();
             return _this;
         }
@@ -195,6 +197,20 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
         Station.prototype.simulateRfid = function (code, processIiwari) {
             this.gotIdCode(code, processIiwari);
         };
+        Station.prototype.gotIdCode = function (idCode, processIiwari) {
+            var record = this.recordFromRfidCode(idCode);
+            if (record)
+                this.gotVisitor(record);
+        };
+        Station.prototype.lostIdCode = function (idCode) {
+            var record = this.recordFromRfidCode(idCode);
+            if (record)
+                this.lostVisitor(record);
+        };
+        Station.prototype.lostVisitor = function (visitor) {
+            _super.prototype.lostVisitor.call(this, visitor);
+            this.owner.visits(visitor, undefined);
+        };
         return Station;
     }(VisitorData_1.StationBase));
     var Reception = (function (_super) {
@@ -246,10 +262,8 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             this.gotVisitor(record);
         };
         Reception.prototype.lostIdCode = function (idCode) {
+            _super.prototype.lostIdCode.call(this, idCode);
             log("Reception station lost UWB token", idCode);
-            var record = this.recordFromRfidCode(idCode);
-            if (record)
-                this.lostVisitor(record);
         };
         Reception.prototype.receivedVisitor = function (visitorData) {
             log("Reception received visitor name", visitorData.name, visitorData.$puid);
@@ -260,50 +274,42 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             this.connectqrcodeProp.value = "https://spaceodyssey.online/spot/index.ftl?mobile=".concat(kMobileSpot, "&param-rfid=").concat(visitorData.idCode);
             return true;
         };
-        Reception.prototype.lostVisitor = function (visitor) {
-            _super.prototype.lostVisitor.call(this, visitor);
-        };
         return Reception;
     }(Station));
-    var InfoStation = (function (_super) {
-        __extends(InfoStation, _super);
-        function InfoStation(spotPath, owner) {
-            return _super.call(this, spotPath, owner) || this;
+    var ScreensStation = (function (_super) {
+        __extends(ScreensStation, _super);
+        function ScreensStation(spotPath, owner) {
+            var _this = _super.call(this, spotPath, owner) || this;
+            _this.clearArrivalAwaiter = undefined;
+            _this.arrivalNameAccessor = _this.getSpotParameterAccessor("latestArrivalName");
+            return _this;
         }
-        InfoStation.prototype.init = function () {
-            this.nameProp = this.getSpotParameterAccessor("name");
+        ScreensStation.prototype.init = function () {
             _super.prototype.init.call(this);
         };
-        InfoStation.prototype.gotIdCode = function (idCode) {
-            log("Info station receved RFID", idCode);
-            var record = this.recordFromRfidCode(idCode);
-            if (record)
-                this.gotVisitor(record);
-            else
-                Spot_1.Spot[this.spotPath].gotoBlock("/Active/Visitor/Unknown");
+        ScreensStation.prototype.gotIdCode = function (idCode) {
+            _super.prototype.gotIdCode.call(this, idCode);
+            log("Screens station receved RFID", idCode);
         };
-        InfoStation.prototype.lostIdCode = function (idCode) {
-            log("Info station lost UWB token", idCode);
-            var record = this.recordFromRfidCode(idCode);
-            if (record)
-                this.lostVisitor(record);
+        ScreensStation.prototype.lostIdCode = function (idCode) {
+            _super.prototype.lostIdCode.call(this, idCode);
+            log("Screens station lost UWB token", idCode);
         };
-        InfoStation.prototype.receivedVisitor = function (visitorData) {
+        ScreensStation.prototype.receivedVisitor = function (visitorData) {
+            var _this = this;
             _super.prototype.receivedVisitor.call(this, visitorData);
-            this.nameProp.value = visitorData.name;
-            if (visitorData.briefed)
-                this.gotoBlock("/Active/Visitor/AlreadyBriefed");
-            else {
-                this.gotoBlock("/Active/Visitor/Brief");
-                visitorData.briefed = true;
+            this.arrivalNameAccessor.value = visitorData.name;
+            if (this.clearArrivalAwaiter) {
+                this.clearArrivalAwaiter.cancel();
             }
+            this.clearArrivalAwaiter = wait(SCREEN_ARRIVAL_LINGER_MS);
+            this.clearArrivalAwaiter.then(function () {
+                _this.arrivalNameAccessor.value = '';
+                _this.clearArrivalAwaiter = undefined;
+            });
             return true;
         };
-        InfoStation.prototype.lostVisitor = function (visitor) {
-            this.gotoBlock("Passive");
-            _super.prototype.lostVisitor.call(this, visitor);
-        };
-        return InfoStation;
+        return ScreensStation;
     }(Station));
     var Trigger3Station = (function (_super) {
         __extends(Trigger3Station, _super);
@@ -316,8 +322,8 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             _super.prototype.init.call(this);
         };
         Trigger3Station.prototype.gotIdCode = function (idCode) {
+            _super.prototype.gotIdCode.call(this, idCode);
             log("Trigger3 got UWB token", idCode);
-            this.gotVisitor(this.recordFromRfidCode(idCode));
         };
         Trigger3Station.prototype.lostIdCode = function (idCode) {
             log("Trigger3 station lost UWB token", idCode);

@@ -12,6 +12,7 @@ import {StationBase, VisitorRecordBase, VisitorScriptBase} from "../lib/VisitorD
 // Constants you may want to change:
 const DEBUG = true;	// Set to false to disable verbose logging
 const kMobileSpot = "Mob1";
+const SCREEN_ARRIVAL_LINGER_MS = 5000;
 
 @record("Data we track for each visitor")
 class QRCodeAndPhoneData extends RecordBase implements VisitorRecordBase {
@@ -81,7 +82,7 @@ export class VisitorTracking extends VisitorScriptBase<Station, QRCodeAndPhoneDa
 
 		this.addStation(new Reception("1_Regi", this));
 		this.addStation(new Trigger3Station("8_Paikannus",this));
-		// this.addStation(new InfoStation("VisitorTracking.ScreenLeft",this));
+		this.addStation(new ScreensStation("4_NeukkariA",this));
 
 		this.listenForVisitors();
 	}
@@ -180,8 +181,21 @@ abstract class Station extends StationBase<QRCodeAndPhoneData, VisitorTracking, 
 
 	/*	All stations use ID tag for identification, so must implement this.
 	 */
-	protected abstract gotIdCode(idCode: string, processIiwari?: boolean): void;
-	protected abstract lostIdCode(idCode: string): void;
+	protected gotIdCode(idCode: string, processIiwari?: boolean) {
+		const record = this.recordFromRfidCode(idCode);
+		if (record)
+			this.gotVisitor(record);
+	}
+	protected lostIdCode(idCode: string) {
+		const record = this.recordFromRfidCode(idCode);
+		if (record)
+			this.lostVisitor(record);
+	}
+
+	lostVisitor(visitor: QRCodeAndPhoneData) {
+		super.lostVisitor(visitor);
+		this.owner.visits(visitor, undefined);
+	}
 }
 
 
@@ -263,10 +277,8 @@ class Reception extends Station {
 	}
 
 	protected lostIdCode(idCode: string) {
+		super.lostIdCode(idCode);
 		log("Reception station lost UWB token", idCode);
-		const record = this.recordFromRfidCode(idCode);
-		if (record)
-			this.lostVisitor(record);
 	}
 
 	// Got a visitor. Present visitor's current data on UI
@@ -279,63 +291,43 @@ class Reception extends Station {
 		this.connectqrcodeProp.value = `https://spaceodyssey.online/spot/index.ftl?mobile=${kMobileSpot}&param-rfid=${visitorData.idCode}`
 		return true;
 	}
-
-	lostVisitor(visitor: QRCodeAndPhoneData) {
-		super.lostVisitor(visitor);
-	}
 }
 
-/*	Station showing some useful information when visited. Only shown to
-	known visitors. Furthermore, the info is only shown ONCE per visitor,
-	so I keep track of this state in the visitor's data record.
-*/
-class InfoStation extends Station {
-	private nameProp: PropertyAccessor<string>;		// Name and email entered at this spot
+class ScreensStation extends Station {
+	private clearArrivalAwaiter: CancelablePromise<void> | undefined = undefined;
+	private arrivalNameAccessor: PropertyAccessor<string>;
 
 	constructor(spotPath: string, owner: VisitorTracking) {
 		super(spotPath, owner);
+		this.arrivalNameAccessor = this.getSpotParameterAccessor<string>("latestArrivalName");
 	}
 
 	init() {
-		// Hook up to Spot parameter used to show visitor's name
-		this.nameProp = this.getSpotParameterAccessor<string>("name");
 		super.init();
 	}
 
 	protected gotIdCode(idCode: string) {
-		log("Info station receved RFID", idCode);
-		const record = this.recordFromRfidCode(idCode);
-		if (record)
-			this.gotVisitor(record);
-		else
-			Spot[this.spotPath].gotoBlock("/Active/Visitor/Unknown");
+		super.gotIdCode(idCode);
+		log("Screens station receved RFID", idCode);
 	}
 
 	protected lostIdCode(idCode: string) {
-		log("Info station lost UWB token", idCode);
-		const record = this.recordFromRfidCode(idCode);
-		if (record)
-			this.lostVisitor(record);
+		super.lostIdCode(idCode);
+		log("Screens station lost UWB token", idCode);
 	}
 
-	/**	Specified visitor is visiting this station.
-		Do what's appropriate there.
-	*/
 	receivedVisitor(visitorData: QRCodeAndPhoneData) {
 		super.receivedVisitor(visitorData);	// Establishes my current visitor
-		this.nameProp.value = visitorData.name
-		if (visitorData.briefed) // Info already shown - show alternative block
-			this.gotoBlock("/Active/Visitor/AlreadyBriefed");
-		else {
-			this.gotoBlock("/Active/Visitor/Brief"); // Show info
-			visitorData.briefed = true;
+		this.arrivalNameAccessor.value = visitorData.name;
+		if (this.clearArrivalAwaiter) {
+			this.clearArrivalAwaiter.cancel();
 		}
+		this.clearArrivalAwaiter = wait(SCREEN_ARRIVAL_LINGER_MS);
+		this.clearArrivalAwaiter.then(() => {
+			this.arrivalNameAccessor.value = '';
+			this.clearArrivalAwaiter = undefined;
+		})
 		return true;
-	}
-
-	lostVisitor(visitor: QRCodeAndPhoneData) {
-		this.gotoBlock("Passive");
-		super.lostVisitor(visitor);
 	}
 }
 
@@ -354,8 +346,8 @@ class Trigger3Station extends Station {
 	}
 
 	protected gotIdCode(idCode: string) {
+		super.gotIdCode(idCode);
 		log("Trigger3 got UWB token", idCode);
-		this.gotVisitor(this.recordFromRfidCode(idCode));
 	}
 
 	protected lostIdCode(idCode: string) {
