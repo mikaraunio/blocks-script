@@ -261,6 +261,7 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
                 this.messageProp.value = "Welcome!";
             }
             this.gotVisitor(record);
+            record.currentStation = '';
         };
         Reception.prototype.lostIdCode = function (idCode) {
             _super.prototype.lostIdCode.call(this, idCode);

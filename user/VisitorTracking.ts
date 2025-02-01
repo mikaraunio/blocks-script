@@ -275,6 +275,7 @@ class Reception extends Station {
 		}
 
 		this.gotVisitor(record);
+		record.currentStation = '';  // Don't record Registration visit
 	}
 
 	protected lostIdCode(idCode: string) {
