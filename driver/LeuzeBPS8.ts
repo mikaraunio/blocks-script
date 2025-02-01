@@ -63,6 +63,7 @@ type ReadQuality = 0|1|2|3;
 
 const POLL_INTERVAL = 33;  // Poll interval in milliseconds
 const TIMEOUT       = 2000; // Timeout delay in milliseconds
+const RESOLUTION    = 100;  // In 1/mm - '100' means 0.01 mm resolution
 
 const DEFAULT_PORT  = 4001; // TCP serial server default port, 4001 for Moxa
 
@@ -303,6 +304,6 @@ export class LeuzeBPS8 extends Driver<NetworkTCP> {
 		this.readQuality = readQuality;
 		this.readQualityString = readQualityStrings[readQuality];
 		// Use Int32Array for two's complement handling
-		this.position = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0];
+		this.position = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0] / RESOLUTION;
 	}
 }
