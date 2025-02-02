@@ -61,7 +61,7 @@ type ReadQuality = 0|1|2|3;
 // poll cycle is interrupted, and a message is sent only at TIMEOUT intervals
 // until a reply is received again.
 
-const POLL_INTERVAL = 33;  // Poll interval in milliseconds
+const POLL_INTERVAL = 30;  // Poll interval in milliseconds
 const TIMEOUT       = 2000; // Timeout delay in milliseconds
 const RESOLUTION    = 100;  // In 1/mm - '100' means 0.01 mm resolution
 
