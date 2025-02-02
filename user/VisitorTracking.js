@@ -25,7 +25,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/ScriptBase", "system_lib/Metadata", "../lib/VisitorData"], function (require, exports, Artnet_1, Spot_1, ScriptBase_1, Metadata_1, VisitorData_1) {
+define(["require", "exports", "system/Spot", "../system_lib/ScriptBase", "system_lib/Metadata", "../lib/VisitorData"], function (require, exports, Spot_1, ScriptBase_1, Metadata_1, VisitorData_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.VisitorTracking = void 0;
@@ -299,34 +299,13 @@ define(["require", "exports", "system/Artnet", "system/Spot", "../system_lib/Scr
             return _this;
         }
         Trigger3Station.prototype.receivedVisitor = function (visitorData) {
-            var FADEIN_TIME = 1;
             _super.prototype.receivedVisitor.call(this, visitorData);
-            if (visitorData.color) {
-                Artnet_1.Artnet['Neukkari_Xbar'].Red.value = 0;
-                Artnet_1.Artnet['Neukkari_Xbar'].Green.value = 0;
-                Artnet_1.Artnet['Neukkari_Xbar'].Blue.value = 0;
-                Artnet_1.Artnet['Neukkari_Xbar'][visitorData.color].fadeTo(1, FADEIN_TIME);
-            }
             this.arrivalColorAccessor.value = visitorData.color;
             this.arrivalNameAccessor.value = 'Hello ' + visitorData.name;
             return true;
         };
         Trigger3Station.prototype.lostVisitor = function (visitor) {
-            var FADEOUT_TIME = 1;
-            var FADEIN_TIME = 0.5;
-            var BLACKOUT_AWAIT_MS = 1800;
             _super.prototype.lostVisitor.call(this, visitor);
-            if (visitor.color) {
-                Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(0, FADEOUT_TIME);
-                Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0, FADEOUT_TIME);
-                Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0, FADEOUT_TIME);
-                var blackoutAwaiter = wait(BLACKOUT_AWAIT_MS);
-                blackoutAwaiter.then(function () {
-                    Artnet_1.Artnet['Neukkari_Xbar'].Red.fadeTo(1, FADEIN_TIME);
-                    Artnet_1.Artnet['Neukkari_Xbar'].Green.fadeTo(0.20, FADEIN_TIME);
-                    Artnet_1.Artnet['Neukkari_Xbar'].Blue.fadeTo(0.32, FADEIN_TIME);
-                });
-            }
             this.arrivalColorAccessor.value = '';
             this.arrivalNameAccessor.value = '';
         };
