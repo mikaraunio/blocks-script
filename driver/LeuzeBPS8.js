@@ -26,7 +26,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LeuzeBPS8 = void 0;
-    var POLL_INTERVAL = 30;
+    var POLL_INTERVAL = 16;
     var TIMEOUT = 2000;
     var RESOLUTION = 100;
     var DEFAULT_PORT = 4001;
@@ -204,24 +204,27 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             var SLEEP = 0x10;
             var Q = 0x60;
             var readQualityStrings = { 0: '> 75%', 1: '50% - 75%', 2: '25% - 50%', 3: '< 25%' };
-            if (data.length != NUM_OCTETS) {
-                console.warn("Discarded reply with incorrect length: expected ".concat(NUM_OCTETS, " bytes, received ").concat(data.length));
-                return;
+            while (data.length > 0) {
+                var telegram = data.splice(0, NUM_OCTETS);
+                if (telegram.length != NUM_OCTETS) {
+                    console.warn("Discarded reply with incorrect length: expected ".concat(NUM_OCTETS, " bytes, received ").concat(telegram.length));
+                    return;
+                }
+                var s = telegram[0], d1 = telegram[1], d2 = telegram[2], d3 = telegram[3], d4 = telegram[4], c = telegram[5];
+                if ((s ^ d1 ^ d2 ^ d3 ^ d4) != c) {
+                    console.warn('Discarded reply with incorrect checksum');
+                    return;
+                }
+                this.internalError = !!(s & ERR);
+                this.tapeError = !!(s & OUT);
+                this.diagnosticDataExist = !!(s & D);
+                this.markerBarCodePresent = !!(s & MM);
+                this.standbyState = !!(s & SLEEP);
+                var readQuality = ((s & Q) >> 5);
+                this.readQuality = readQuality;
+                this.readQualityString = readQualityStrings[readQuality];
+                this.position = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0] / RESOLUTION;
             }
-            var s = data[0], d1 = data[1], d2 = data[2], d3 = data[3], d4 = data[4], c = data[5];
-            if ((s ^ d1 ^ d2 ^ d3 ^ d4) != c) {
-                console.warn('Discarded reply with incorrect checksum');
-                return;
-            }
-            this.internalError = !!(s & ERR);
-            this.tapeError = !!(s & OUT);
-            this.diagnosticDataExist = !!(s & D);
-            this.markerBarCodePresent = !!(s & MM);
-            this.standbyState = !!(s & SLEEP);
-            var readQuality = ((s & Q) >> 5);
-            this.readQuality = readQuality;
-            this.readQualityString = readQualityStrings[readQuality];
-            this.position = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0] / RESOLUTION;
         };
         __decorate([
             Meta.property("Connected to TCP server", true),
