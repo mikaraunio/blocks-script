@@ -285,25 +285,28 @@ export class LeuzeBPS8 extends Driver<NetworkTCP> {
 		// Reading quality status strings
 		const readQualityStrings = { 0: '> 75%', 1: '50% - 75%', 2: '25% - 50%', 3: '< 25%' }
 
-		if (data.length != NUM_OCTETS) {
-			console.warn(`Discarded reply with incorrect length: expected ${NUM_OCTETS} bytes, received ${data.length}`);
-			return;
-		}
-		const [s, d1, d2, d3, d4, c] = data;
-		if ((s ^ d1 ^ d2 ^ d3 ^ d4) != c) {
-			console.warn('Discarded reply with incorrect checksum');
-			return;
-		}
+		while (data.length > 0) {
+			const telegram = data.splice(0, NUM_OCTETS)
+			if (telegram.length != NUM_OCTETS) {
+				console.warn(`Discarded reply with incorrect length: expected ${NUM_OCTETS} bytes, received ${telegram.length}`);
+				return;
+			}
+			const [s, d1, d2, d3, d4, c] = telegram;
+			if ((s ^ d1 ^ d2 ^ d3 ^ d4) != c) {
+				console.warn('Discarded reply with incorrect checksum');
+				return;
+			}
 
-		this.internalError = !!(s & ERR);
-		this.tapeError = !!(s & OUT);
-		this.diagnosticDataExist = !!(s & D);
-		this.markerBarCodePresent = !!(s & MM);
-		this.standbyState = !!(s & SLEEP);
-		const readQuality = <ReadQuality>((s & Q) >> 5);
-		this.readQuality = readQuality;
-		this.readQualityString = readQualityStrings[readQuality];
-		// Use Int32Array for two's complement handling
-		this.position = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0] / RESOLUTION;
+			this.internalError = !!(s & ERR);
+			this.tapeError = !!(s & OUT);
+			this.diagnosticDataExist = !!(s & D);
+			this.markerBarCodePresent = !!(s & MM);
+			this.standbyState = !!(s & SLEEP);
+			const readQuality = <ReadQuality>((s & Q) >> 5);
+			this.readQuality = readQuality;
+			this.readQualityString = readQualityStrings[readQuality];
+			// Use Int32Array for two's complement handling
+			this.position = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0] / RESOLUTION;
+		}
 	}
 }
