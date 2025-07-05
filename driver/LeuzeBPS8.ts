@@ -286,12 +286,16 @@ export class LeuzeBPS8 extends Driver<NetworkTCP> {
 		const readQualityStrings = { 0: '> 75%', 1: '50% - 75%', 2: '25% - 50%', 3: '< 25%' }
 
 		while (data.length > 0) {
-			const telegram = data.splice(0, NUM_OCTETS)
-			if (telegram.length != NUM_OCTETS) {
-				console.warn(`Discarded reply with incorrect length: expected ${NUM_OCTETS} bytes, received ${telegram.length}`);
+			if (data.length < NUM_OCTETS) {
+				console.warn(`Discarded reply with incorrect length: expected ${NUM_OCTETS} bytes, received ${data.length}`);
 				return;
 			}
-			const [s, d1, d2, d3, d4, c] = telegram;
+			const s = data.shift(),
+				d1 = data.shift(),
+				d2 = data.shift(),
+				d3 = data.shift(),
+				d4 = data.shift(), 
+				c = data.shift();
 			if ((s ^ d1 ^ d2 ^ d3 ^ d4) != c) {
 				console.warn('Discarded reply with incorrect checksum');
 				return;

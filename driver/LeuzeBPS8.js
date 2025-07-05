@@ -205,12 +205,11 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             var Q = 0x60;
             var readQualityStrings = { 0: '> 75%', 1: '50% - 75%', 2: '25% - 50%', 3: '< 25%' };
             while (data.length > 0) {
-                var telegram = data.splice(0, NUM_OCTETS);
-                if (telegram.length != NUM_OCTETS) {
-                    console.warn("Discarded reply with incorrect length: expected ".concat(NUM_OCTETS, " bytes, received ").concat(telegram.length));
+                if (data.length < NUM_OCTETS) {
+                    console.warn("Discarded reply with incorrect length: expected ".concat(NUM_OCTETS, " bytes, received ").concat(data.length));
                     return;
                 }
-                var s = telegram[0], d1 = telegram[1], d2 = telegram[2], d3 = telegram[3], d4 = telegram[4], c = telegram[5];
+                var s = data.shift(), d1 = data.shift(), d2 = data.shift(), d3 = data.shift(), d4 = data.shift(), c = data.shift();
                 if ((s ^ d1 ^ d2 ^ d3 ^ d4) != c) {
                     console.warn('Discarded reply with incorrect checksum');
                     return;
