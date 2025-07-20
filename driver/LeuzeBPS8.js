@@ -26,7 +26,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LeuzeBPS8 = void 0;
-    var POLL_INTERVAL = 16;
+    var POLL_INTERVAL = 8.33;
     var TIMEOUT = 2000;
     var RESOLUTION = 100;
     var DEFAULT_PORT = 4001;
@@ -195,7 +195,7 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
         LeuzeBPS8.prototype.leuzeSendPoll = function () {
             this.send([0x08, 0x08]);
         };
-        LeuzeBPS8.prototype.leuzeProcessData = function (data) {
+        LeuzeBPS8.prototype.leuzeProcessData = function (rawData) {
             var NUM_OCTETS = 6;
             var ERR = 0x01;
             var OUT = 0x02;
@@ -204,12 +204,17 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
             var SLEEP = 0x10;
             var Q = 0x60;
             var readQualityStrings = { 0: '> 75%', 1: '50% - 75%', 2: '25% - 50%', 3: '< 25%' };
+            var data = [];
+            for (var i = 0; i < rawData.length; i++) {
+                data[i] = rawData[i];
+            }
             while (data.length > 0) {
-                if (data.length < NUM_OCTETS) {
-                    console.warn("Discarded reply with incorrect length: expected ".concat(NUM_OCTETS, " bytes, received ").concat(data.length));
+                var telegram = data.splice(0, NUM_OCTETS);
+                if (telegram.length != NUM_OCTETS) {
+                    console.warn("Discarded reply with incorrect length: expected ".concat(NUM_OCTETS, " bytes, received ").concat(telegram.length));
                     return;
                 }
-                var s = data.shift(), d1 = data.shift(), d2 = data.shift(), d3 = data.shift(), d4 = data.shift(), c = data.shift();
+                var s = telegram[0], d1 = telegram[1], d2 = telegram[2], d3 = telegram[3], d4 = telegram[4], c = telegram[5];
                 if ((s ^ d1 ^ d2 ^ d3 ^ d4) != c) {
                     console.warn('Discarded reply with incorrect checksum');
                     return;
@@ -222,7 +227,8 @@ define(["require", "exports", "system_lib/Driver", "system_lib/Metadata"], funct
                 var readQuality = ((s & Q) >> 5);
                 this.readQuality = readQuality;
                 this.readQualityString = readQualityStrings[readQuality];
-                this.position = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0] / RESOLUTION;
+                this.mPosition = new Int32Array([(d1 << 24) + (d2 << 16) + (d3 << 8) + d4])[0] / RESOLUTION;
+                this.changed('position');
             }
         };
         __decorate([
